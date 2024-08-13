@@ -1,5 +1,3 @@
-use std::arch::x86_64;
-
 use actix_web::{cookie::Cookie, http::StatusCode, web, HttpResponse, HttpResponseBuilder, Responder};
 use uuid::Uuid;
 
