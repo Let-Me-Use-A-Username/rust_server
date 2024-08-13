@@ -1,0 +1,19 @@
+[package]
+name = "rust_server"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+
+actix-web = "4"                                             #web functionality
+
+serde = { version = "1.0", features = ["derive"]}           #Serializer/Deserializer
+
+rusqlite = { version = "0.32.0", features = ["bundled"]}    #SQLite wrapper
+
+rand = "0.8.5"                                              #random generator
+
+argon2 = "0.5.3"                                            #hash functions
+hex = "0.4.3"
+sha2 = "0.10.8"
+uuid = { version = "1.10.0", features = ["v4"] }
