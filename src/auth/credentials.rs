@@ -37,20 +37,23 @@ pub async fn verify_credentials(credentials: web::Json<MessageBody>) -> impl Res
                 Err(error) => {
                     //HTTP ERROR response
                     println!("{:?}", error);
-                    return HttpResponse::new(StatusCode::INTERNAL_SERVER_ERROR)
+                    return HttpResponse::InternalServerError()
+                    .body("Error while fetching users from database.")
                 },
             };
 
             //Review: what if more than one user match ?
             match matching_user.len(){
                 0 => {
-                    return HttpResponse::new(StatusCode::INTERNAL_SERVER_ERROR)
+                    return HttpResponse::InternalServerError()
+                    .body("Error no users matched.")
                 },
                 1 => {
                     //FIXME : Only proceed if one user is found
                 },
                 _ => {
-                    return HttpResponse::new(StatusCode::INTERNAL_SERVER_ERROR)
+                    return HttpResponse::InternalServerError()
+                    .body("Error too many users matched.")
                 }
             }
 
@@ -71,7 +74,8 @@ pub async fn verify_credentials(credentials: web::Json<MessageBody>) -> impl Res
         Err(error) => {
             //HTTP ERROR response
             println!("{:?}", error);
-            return HttpResponse::new(StatusCode::INTERNAL_SERVER_ERROR)
+            return HttpResponse::InternalServerError()
+            .body("Error while fetching database instance.")
         }
     }
 }
@@ -100,10 +104,12 @@ pub async fn save_credentials(credentials: web::Json<MessageBody>) -> impl Respo
                                 //redirect to login
                                 println!("{:?}", rows);
                                 return HttpResponse::Created()
+                                .body("Account created.")
                             },
                             Err(error) => {
                                 println!("{:?}", error);
                                 return HttpResponse::InternalServerError()
+                                .body("Error while appending user to database.")
                             },
                         }
                     },
@@ -111,6 +117,7 @@ pub async fn save_credentials(credentials: web::Json<MessageBody>) -> impl Respo
                     Err(error) => {
                         println!("{:?}", error);
                         return HttpResponse::InternalServerError()
+                        .body("Error while hashing users password.")
                     },
                 }
             },
@@ -119,17 +126,21 @@ pub async fn save_credentials(credentials: web::Json<MessageBody>) -> impl Respo
                 //HTTP ERROR response
                 println!("{:?}", error);
                 return HttpResponse::InternalServerError()
+                .body("Error while fetching database instance.")
             },
         }
     }
 
     return HttpResponse::BadRequest()
+    .body("Password doesn't fulfill sanitazation rules. Password must contain at least 8 characters.
+    One digit, one letter and one special character.")
 }
 
 
 ///Basic function to see if one of each key type is present.
 ///Client side sanitization is also implemented.
 pub fn sanitize(password: &String) -> bool{
+    let mut has_length = false;
     let mut has_digit = false;
     let mut has_letter = false;
     let mut has_special_char = false;
@@ -146,8 +157,11 @@ pub fn sanitize(password: &String) -> bool{
         if c.is_ascii_punctuation(){
             has_special_char = true;
         }
-
     });
+
+    if password.len() >= 8{
+        has_length = true;
+    }
     
-    return has_digit && has_letter && has_special_char
+    return has_length && has_digit && has_letter && has_special_char
 }
