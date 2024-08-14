@@ -42,8 +42,16 @@ pub async fn verify_credentials(credentials: web::Json<MessageBody>) -> impl Res
             };
 
             //Review: what if more than one user match ?
-            if matching_user.len() > 1{
-                return HttpResponse::new(StatusCode::INTERNAL_SERVER_ERROR)
+            match matching_user.len(){
+                0 => {
+                    return HttpResponse::new(StatusCode::INTERNAL_SERVER_ERROR)
+                },
+                1 => {
+                    //FIXME : Only proceed if one user is found
+                },
+                _ => {
+                    return HttpResponse::new(StatusCode::INTERNAL_SERVER_ERROR)
+                }
             }
 
             //Review: Make better response

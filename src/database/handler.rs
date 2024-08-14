@@ -1,4 +1,4 @@
-use std::str::FromStr;
+use std::{io::{self, stdin}, str::FromStr};
 
 use argon2::password_hash::SaltString;
 use rusqlite::{Connection, Error, Result};
@@ -49,6 +49,29 @@ impl DatabaseHandler{
         );
 
         return res;
+    }
+
+    pub fn query_db(&self) {
+        loop{
+            let mut string_query = String::new();
+            let mut buffer = io::stdin().read_line(&mut string_query);
+            let statement = self.connection.prepare(&string_query);
+
+            match statement.unwrap().query(rusqlite::params![]){
+                Ok(mut result) => {
+                    loop{
+                        let row = result.next().unwrap();
+
+                        if row.is_some(){
+                            println!("Row {:?}", row);
+                        }
+                    }
+                },
+                Err(error) => {
+                    println!("Error {:?}", error);
+                },
+            }
+        }
     }
 
 
