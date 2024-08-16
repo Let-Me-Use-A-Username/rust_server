@@ -8,12 +8,12 @@ pub struct User{
     id: Uuid,
     username: String,
     password: String,
-    cookie: i32,
+    cookie: Option<String>,
     active_sessions: i32,
     salt: SaltString
 }
 impl User{
-    pub fn new(id: Uuid, username: String, password: String, cookie: i32, active_sessions: i32, salt: SaltString) -> User{
+    pub fn new(id: Uuid, username: String, password: String, cookie: Option<String>, active_sessions: i32, salt: SaltString) -> User{
         User { 
             id: id, 
             username: username, 
@@ -36,7 +36,7 @@ impl User{
         return &self.password
     }
 
-    pub fn get_cookie(&self) -> &i32{
+    pub fn get_cookie(&self) -> &Option<String>{
         return &self.cookie
     }
 

@@ -96,27 +96,32 @@ pub async fn save_credentials(credentials: web::Json<MessageBody>) -> impl Respo
                 //push to db
                 match hashed_password{
                     Ok(hash) => {
+                        println!("Hashed username {:?}", username);
+                        println!("Hashed passwd {:?}", hash);
                         //db push new user
-                        let user = User::new(Uuid::new_v4(), hashed_username, hash, 0, 0, salt);
+                        let user = User::new(Uuid::new_v4(), hashed_username, hash, None, 0, salt);
                         match database_handler.insert_user(user){
                             //Review: Make better response
                             Ok(rows) => {
                                 //redirect to login
                                 println!("{:?}", rows);
                                 return HttpResponse::Created()
+                                .status(StatusCode::CREATED)
                                 .body("Account created.")
                             },
                             Err(error) => {
-                                println!("{:?}", error);
+                                println!("Error while inserting user to database: {:?}", error);
                                 return HttpResponse::InternalServerError()
+                                .status(StatusCode::INTERNAL_SERVER_ERROR)
                                 .body("Error while appending user to database.")
                             },
                         }
                     },
                     //Review: Make better response
                     Err(error) => {
-                        println!("{:?}", error);
+                        println!("Error while hashing password: {:?}", error);
                         return HttpResponse::InternalServerError()
+                        .status(StatusCode::INTERNAL_SERVER_ERROR)
                         .body("Error while hashing users password.")
                     },
                 }
@@ -124,14 +129,16 @@ pub async fn save_credentials(credentials: web::Json<MessageBody>) -> impl Respo
             //Review: Make better response
             Err(error) => {
                 //HTTP ERROR response
-                println!("{:?}", error);
+                println!("Error while opening database: {:?}", error);
                 return HttpResponse::InternalServerError()
+                .status(StatusCode::INTERNAL_SERVER_ERROR)
                 .body("Error while fetching database instance.")
             },
         }
     }
 
     return HttpResponse::BadRequest()
+    .status(StatusCode::BAD_REQUEST)
     .body("Password doesn't fulfill sanitazation rules. Password must contain at least 8 characters.
     One digit, one letter and one special character.")
 }

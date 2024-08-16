@@ -1,4 +1,4 @@
-use std::{io::{self, stdin}, str::FromStr};
+use std::{io, str::FromStr};
 
 use argon2::password_hash::SaltString;
 use rusqlite::{Connection, Error, Result};
@@ -28,12 +28,12 @@ impl DatabaseHandler{
         //FIXME : Create appropriate data types in database
         let res = self.connection.execute(
             "CREATE TABLE IF NOT EXISTS user(
-                id INTEGER PRIMARY KEY,
+                id TEXT PRIMARY KEY,
                 username TEXT NOT NULL,
                 password TEXT NOT NULL,
-                cookie INTEGER,
-                active_sessions INTEGER,
-                salt INTEGER
+                cookie TEXT,
+                active_sessions INTEGER DEFAULT 0,
+                salt TEXT NOT NULL
             )",
         (),
         );
@@ -91,7 +91,7 @@ impl DatabaseHandler{
                                 let id: String = user.get_unwrap(0);
                                 let username: String = user.get_unwrap(1);
                                 let password: String = user.get_unwrap(2);
-                                let cookie: i32 = user.get_unwrap(3);
+                                let cookie: Option<String> = user.get_unwrap(3);
                                 let active_sessions: i32 = user.get_unwrap(4);
                                 let salt: String = user.get_unwrap(5);
                                 users.push(User::new(
