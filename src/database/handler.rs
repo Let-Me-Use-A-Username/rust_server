@@ -1,7 +1,7 @@
 use std::{io, str::FromStr};
 
 use argon2::password_hash::SaltString;
-use rusqlite::{Connection, Error, Result};
+use rusqlite::{Connection, Error, Result, ToSql};
 use uuid::Uuid;
 
 use crate::models::database_models::User;
@@ -54,7 +54,7 @@ impl DatabaseHandler{
     pub fn query_db(&self) {
         loop{
             let mut string_query = String::new();
-            let mut buffer = io::stdin().read_line(&mut string_query);
+            let _ = io::stdin().read_line(&mut string_query);
             let statement = self.connection.prepare(&string_query);
 
             match statement.unwrap().query(rusqlite::params![]){
@@ -122,10 +122,10 @@ impl DatabaseHandler{
 
     pub fn insert_user(&self, user: User) -> Result<usize, Error>{
         let statement = self.connection.prepare(
-            "INSERT INTO user(id, username, password, cookie, active_session, salt)
+            "INSERT INTO user(id, username, password, cookie, active_sessions, salt)
             VALUES (?1, ?2, ?3, ?4, ?5)"
         );
-        //FIXME : Uuid is send as a string
+        
         let res = statement.unwrap().execute((
             user.get_id().to_string(), 
             user.get_username(), 
