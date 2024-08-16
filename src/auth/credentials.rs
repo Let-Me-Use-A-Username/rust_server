@@ -3,8 +3,10 @@ use uuid::Uuid;
 
 use crate::{database::handler::DatabaseHandler, models::{database_models::User, server_models::MessageBody}};
 
-use super::hasher::Hasher;
+use super::{hasher::Hasher, sessions::SessionManager};
 
+///Handler that verifies credentials.
+///Creates a new session and sends cookie to client side.
 pub async fn verify_credentials(credentials: web::Json<MessageBody>) -> impl Responder {
     match DatabaseHandler::new(){
         Ok(database_handler) => {
@@ -33,54 +35,62 @@ pub async fn verify_credentials(credentials: web::Json<MessageBody>) -> impl Res
                         }
                     });
                 },
-                //Review: Make better response
                 Err(error) => {
                     //HTTP ERROR response
-                    println!("{:?}", error);
+                    println!("Error while fetching users: {:?}", error);
                     return HttpResponse::InternalServerError()
+                    .status(StatusCode::INTERNAL_SERVER_ERROR)
                     .body("Error while fetching users from database.")
                 },
             };
 
-            //Review: what if more than one user match ?
             match matching_user.len(){
                 0 => {
+                    println!("Error no users matched");
                     return HttpResponse::InternalServerError()
+                    .status(StatusCode::INTERNAL_SERVER_ERROR)
                     .body("Error no users matched.")
                 },
                 1 => {
-                    //FIXME : Only proceed if one user is found
+                    let manager = SessionManager::new();
+                    let user = matching_user.pop().unwrap();
+                    let user_session = manager.create_session(user.get_id());
+
+                    let response = HttpResponseBuilder::new(StatusCode::ACCEPTED)
+                    .cookie({
+                        Cookie::build(user.get_id().to_string(), user_session.get_id().to_string())
+                            .http_only(true)
+                            .secure(true)
+                            .finish()
+                    })
+                    .finish();
+
+                    let res = database_handler.insert_session(user_session);
+                    println!("Session: {:?}", res);
+
+                    return response
                 },
                 _ => {
+                    println!("Error too many users matched");
                     return HttpResponse::InternalServerError()
+                    .status(StatusCode::INTERNAL_SERVER_ERROR)
                     .body("Error too many users matched.")
                 }
             }
-
-            //Review: Make better response
-            //create and send cookie
-            //FIXME: Add cookie to db
-            return HttpResponseBuilder::new(StatusCode::ACCEPTED)
-            .cookie({
-                Cookie::build(username, Uuid::new_v4().to_string())
-                    .secure(true)
-                    .http_only(true)
-                    .finish()
-            })
-            .finish()
             
         },
-        //Review: Make better response
         Err(error) => {
             //HTTP ERROR response
-            println!("{:?}", error);
+            println!("Error while fetching database: {:?}", error);
             return HttpResponse::InternalServerError()
+            .status(StatusCode::INTERNAL_SERVER_ERROR)
             .body("Error while fetching database instance.")
         }
     }
 }
 
 
+///Handler that saves credentials to database.
 pub async fn save_credentials(credentials: web::Json<MessageBody>) -> impl Responder {
     let username = &credentials.content.username;
     let password = &credentials.content.password;
@@ -96,15 +106,12 @@ pub async fn save_credentials(credentials: web::Json<MessageBody>) -> impl Respo
                 //push to db
                 match hashed_password{
                     Ok(hash) => {
-                        println!("Hashed username {:?}", username);
-                        println!("Hashed passwd {:?}", hash);
                         //db push new user
-                        let user = User::new(Uuid::new_v4(), hashed_username, hash, None, 0, salt);
+                        let user = User::new(Uuid::new_v4(), hashed_username, hash, 0, salt);
                         match database_handler.insert_user(user){
-                            //Review: Make better response
                             Ok(rows) => {
                                 //redirect to login
-                                println!("{:?}", rows);
+                                println!("User {:?}", rows);
                                 return HttpResponse::Created()
                                 .status(StatusCode::CREATED)
                                 .body("Account created.")
@@ -117,7 +124,6 @@ pub async fn save_credentials(credentials: web::Json<MessageBody>) -> impl Respo
                             },
                         }
                     },
-                    //Review: Make better response
                     Err(error) => {
                         println!("Error while hashing password: {:?}", error);
                         return HttpResponse::InternalServerError()
@@ -126,7 +132,6 @@ pub async fn save_credentials(credentials: web::Json<MessageBody>) -> impl Respo
                     },
                 }
             },
-            //Review: Make better response
             Err(error) => {
                 //HTTP ERROR response
                 println!("Error while opening database: {:?}", error);

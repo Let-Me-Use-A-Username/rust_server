@@ -1,10 +1,10 @@
 use std::{io, str::FromStr};
 
 use argon2::password_hash::SaltString;
-use rusqlite::{Connection, Error, Result, ToSql};
+use rusqlite::{Connection, Error, Result};
 use uuid::Uuid;
 
-use crate::models::database_models::User;
+use crate::models::database_models::{Session, User};
 
 static DATABASE_PATH:&'static str  = "./user_database.db3";
 
@@ -12,6 +12,7 @@ pub struct DatabaseHandler{
     connection: Connection
 }
 impl DatabaseHandler{
+    ///Get new database handler instance.
     pub fn new() -> Result<DatabaseHandler>{
         let connection = Connection::open(DATABASE_PATH);
 
@@ -23,7 +24,7 @@ impl DatabaseHandler{
         return Err(connection.err().unwrap());
     }
     
-
+    ///Initialize database tables.
     pub fn initialize_tables(&self) -> Result<usize, Error>{
         //FIXME : Create appropriate data types in database
         let res = self.connection.execute(
@@ -31,26 +32,33 @@ impl DatabaseHandler{
                 id TEXT PRIMARY KEY,
                 username TEXT NOT NULL,
                 password TEXT NOT NULL,
-                cookie TEXT,
                 active_sessions INTEGER DEFAULT 0,
                 salt TEXT NOT NULL
-            )",
+            );
+                CREATE TABLE IF NOT EXISTS session(
+                session_id TEXT PRIMARY KEY,
+                user_id TEXT NOT NULL REFERENCES user(id),
+                created INTEGER NOT NULL,
+                expires INTEGER NOT NULL  
+            );",
         (),
         );
 
         return res;
     }
 
-
+    ///Drop all tables for re-initialization.
     pub fn drop_tables(&self) -> Result<usize, Error>{
         let res = self.connection.execute(
-            "DROP TABLE IF EXISTS user",
+            "DROP TABLE IF EXISTS user;
+                DROP TABLE IF EXISTS session",
             (),
         );
 
         return res;
     }
 
+    ///Query database for debugging.
     pub fn query_db(&self) {
         loop{
             let mut string_query = String::new();
@@ -74,68 +82,115 @@ impl DatabaseHandler{
         }
     }
 
-
+    ///Get all users with matching username.
     pub fn get_users(&self, username: &String) -> Result<Vec<User>, Error>{
-        let statement = self.connection.prepare("SELECT * FROM user where username = ?1");
+        let statement = self.connection.prepare("SELECT * FROM user WHERE username = ?1");
 
-        if statement.is_ok(){
-            match statement.unwrap().query(rusqlite::params![username]){
-                Ok(mut rows) => {
-                    let mut users: Vec<User> = vec![];
+        match statement.unwrap().query(rusqlite::params![username]){
+            Ok(mut rows) => {
+                let mut users: Vec<User> = vec![];
+                
+                loop{
+                    let row = rows.next().unwrap();
                     
-                    loop{
-                        let row = rows.next().unwrap();
-                        
-                        match row{
-                            Some(user) => {
-                                let id: String = user.get_unwrap(0);
-                                let username: String = user.get_unwrap(1);
-                                let password: String = user.get_unwrap(2);
-                                let cookie: Option<String> = user.get_unwrap(3);
-                                let active_sessions: i32 = user.get_unwrap(4);
-                                let salt: String = user.get_unwrap(5);
-                                users.push(User::new(
-                                    Uuid::from_str(&id).unwrap(), 
-                                    username, 
-                                    password, 
-                                    cookie, 
-                                    active_sessions, 
-                                    SaltString::from_b64(&salt).unwrap()
-                                ))
-                            },
-                            None => {
-                                return Ok(users);
-                            },
-                        }
+                    match row{
+                        Some(user) => {
+                            let id: String = user.get_unwrap(0);
+                            let username: String = user.get_unwrap(1);
+                            let password: String = user.get_unwrap(2);
+                            let active_sessions: i32 = user.get_unwrap(3);
+                            let salt: String = user.get_unwrap(4);
+                            users.push(User::new(
+                                Uuid::from_str(&id).unwrap(), 
+                                username, 
+                                password, 
+                                active_sessions, 
+                                SaltString::from_b64(&salt).unwrap()
+                            ))
+                        },
+                        None => {
+                            return Ok(users);
+                        },
                     }
-                },
-                Err(error) => {
-                    return Err(error)
-                },
-            }
-        }
-        else{
-            return Err(statement.unwrap_err())
+                }
+            },
+            Err(error) => {
+                return Err(error)
+            },
         }
     }
 
-
+    ///Insert new user to database.
     pub fn insert_user(&self, user: User) -> Result<usize, Error>{
         let statement = self.connection.prepare(
-            "INSERT INTO user(id, username, password, cookie, active_sessions, salt)
-            VALUES (?1, ?2, ?3, ?4, ?5, ?6)"
+            "INSERT INTO user(id, username, password, active_sessions, salt)
+            VALUES (?1, ?2, ?3, ?4, ?5)"
         );
         
-        let res = statement.unwrap().execute((
+        return statement.unwrap().execute((
             user.get_id().to_string(), 
             user.get_username(), 
-            user.get_password(), 
-            user.get_cookie().as_deref(), 
+            user.get_password(),
             user.get_active_sessions(), 
             user.get_salt().to_string()
-        ));
-        
-        return res
+        ))
+    }
+
+    ///Get session with matching id.
+    pub fn get_session(&self, session_id: &Uuid) -> Result<Session, Error>{
+        let statement = self.connection.prepare(
+            "SELECT * FROM session WHERE session_id = ?1"
+        );
+
+        match statement.unwrap().query(rusqlite::params![session_id.to_string()]){
+            Ok(mut rows) => {
+                let mut sessions: Vec<Session> = vec![];
+
+                loop{
+                    let row = rows.next().unwrap();
+                    
+                    match row{
+                        Some(session) => {
+                            let session_id: String = session.get_unwrap(0);
+                            let user_id: String = session.get_unwrap(1);
+                            let created: i64 = session.get_unwrap(2);
+                            let expires: i64 = session.get_unwrap(3);
+                            sessions.push(Session::new(
+                                Uuid::from_str(&session_id).unwrap(), 
+                                Uuid::from_str(&user_id).unwrap(), 
+                                created, 
+                                expires, 
+                            ))
+                        },
+                        None => {
+                            if sessions.len() > 1{
+                                return Err(Error::ExecuteReturnedResults)
+                            }
+
+                            return Ok(sessions.pop().unwrap());
+                        },
+                    }
+                }
+            },
+            Err(error) => {
+                return Err(error)
+            },
+        }
+    }
+
+    ///Insert new session to database.
+    pub fn insert_session(&self, session: Session) -> Result<usize, Error>{
+        let statement = self.connection.prepare(
+            "INSERT INTO session(session_id, user_id, created, expires) 
+            VALUES (?1, ?2, ?3, ?4)"
+        );
+
+        return statement.unwrap().execute((
+            session.get_id().to_string(),
+            session.get_user_id().to_string(),
+            session.get_created(),
+            session.get_expires()
+        ))
     }
 
 }
