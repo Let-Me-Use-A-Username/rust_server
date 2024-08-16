@@ -1,7 +1,7 @@
 use std::{io, str::FromStr};
 
 use argon2::password_hash::SaltString;
-use rusqlite::{Connection, Error, Result, ToSql};
+use rusqlite::{Connection, Error, Result};
 use uuid::Uuid;
 
 use crate::models::database_models::User;
@@ -123,7 +123,7 @@ impl DatabaseHandler{
     pub fn insert_user(&self, user: User) -> Result<usize, Error>{
         let statement = self.connection.prepare(
             "INSERT INTO user(id, username, password, cookie, active_sessions, salt)
-            VALUES (?1, ?2, ?3, ?4, ?5)"
+            VALUES (?1, ?2, ?3, ?4, ?5, ?6)"
         );
         
         let res = statement.unwrap().execute((
