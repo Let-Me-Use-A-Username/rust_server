@@ -1,7 +1,7 @@
 use std::{io, str::FromStr};
 
 use argon2::password_hash::SaltString;
-use rusqlite::{Connection, Error, Result};
+use rusqlite::{Connection, Error, Result, ToSql};
 use uuid::Uuid;
 
 use crate::models::database_models::User;
@@ -130,7 +130,7 @@ impl DatabaseHandler{
             user.get_id().to_string(), 
             user.get_username(), 
             user.get_password(), 
-            user.get_cookie(), 
+            user.get_cookie().as_deref(), 
             user.get_active_sessions(), 
             user.get_salt().to_string()
         ));
