@@ -1,0 +1,38 @@
+=========TODO===========
+Server side:
+    -Make better responses
+    -When user logs in verify session
+    -Validate session integrity (Research)
+
+Client side:
+    -Check if session works correctly
+    -Research on better redirect method
+    -Save cookie 
+
+
+
+
+
+===========NOTES===========
+Cookies and Sessions:
+    -Check if used if (Uuid) generated already exists in database (collision).
+    -Sessions are valid for one hour.
+    -Cookies are deleted when the sessions ends, either via browser or via expiration.
+
+
+Database:
+    Two choices exist for database connection:
+
+        1) Connection per request
+            +Resource efficient
+            -Request overhead
+
+        2) Persistent connection
+            +Performance
+            -Resource consumption
+
+        3) Pooling
+            Middle ground between the two.
+            Keep a connection pool and when a transaction takes place,
+            borrow a connection and when done return it.
+            Needs research.
