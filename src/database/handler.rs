@@ -37,6 +37,10 @@ impl DatabaseHandler{
         (),
         );
 
+        if user.is_err(){
+            return user
+        }
+
         let session = self.connection.execute(
             "CREATE TABLE IF NOT EXISTS session(
                 session_id TEXT PRIMARY KEY,
@@ -47,17 +51,11 @@ impl DatabaseHandler{
             (),
         );
 
-        match user.is_ok() && session.is_ok(){
-            true => return Ok(user.unwrap() + session.unwrap()),
-            false => {
-                if user.is_err(){
-                    return user
-                }
-                else{
-                    return session
-                }
-            },
+        if session.is_err(){
+            return session
         }
+
+        return Ok(user.unwrap() + session.unwrap())
     }
 
     ///Drop all tables for re-initialization.
