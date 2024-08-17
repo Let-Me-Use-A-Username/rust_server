@@ -26,25 +26,38 @@ impl DatabaseHandler{
     
     ///Initialize database tables.
     pub fn initialize_tables(&self) -> Result<usize, Error>{
-        //FIXME : Create appropriate data types in database
-        let res = self.connection.execute(
+        let user = self.connection.execute(
             "CREATE TABLE IF NOT EXISTS user(
                 id TEXT PRIMARY KEY,
                 username TEXT NOT NULL,
                 password TEXT NOT NULL,
                 active_sessions INTEGER DEFAULT 0,
                 salt TEXT NOT NULL
-            );
-                CREATE TABLE IF NOT EXISTS session(
-                session_id TEXT PRIMARY KEY,
-                user_id TEXT NOT NULL REFERENCES user(id),
-                created INTEGER NOT NULL,
-                expires INTEGER NOT NULL  
             );",
         (),
         );
 
-        return res;
+        let session = self.connection.execute(
+            "CREATE TABLE IF NOT EXISTS session(
+                session_id TEXT PRIMARY KEY,
+                user_id TEXT NOT NULL REFERENCES user(id),
+                created INTEGER NOT NULL,
+                expires INTEGER NOT NULL  
+            );", 
+            (),
+        );
+
+        match user.is_ok() && session.is_ok(){
+            true => return Ok(user.unwrap() + session.unwrap()),
+            false => {
+                if user.is_err(){
+                    return user
+                }
+                else{
+                    return session
+                }
+            },
+        }
     }
 
     ///Drop all tables for re-initialization.
