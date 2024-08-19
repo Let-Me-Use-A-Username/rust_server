@@ -1,4 +1,5 @@
 use actix_web::cookie::time::OffsetDateTime;
+use rusqlite::Error;
 use uuid::Uuid;
 
 use crate::{database::handler::DatabaseHandler, models::database_models::Session};
@@ -22,11 +23,23 @@ impl SessionManager{
     }
     
     ///Validate a session.
-    pub fn validate_session(&self, session: Session, handler: DatabaseHandler){
+    pub fn validate_session(&self, session: Session, handler: DatabaseHandler) -> Result<bool, Error>{
         let now = OffsetDateTime::now_utc().unix_timestamp();
 
-        let session = handler.get_session(session.get_id());
+        match handler.get_session(session.get_id()){
+            Ok(session) => {
 
+                //expired
+                if session.get_expires() < &now {
+                    return Ok(false)
+                }
+
+                return Ok(true)
+            },
+            Err(error) => {
+                return Err(error)
+            },
+        }
         //if session.expires > now { OK } else { expired }
     }
 

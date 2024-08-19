@@ -174,8 +174,8 @@ impl DatabaseHandler{
                             ))
                         },
                         None => {
-                            if sessions.len() > 1{
-                                return Err(Error::ExecuteReturnedResults)
+                            if sessions.len() == 0 || sessions.len() > 1{
+                                return Err(Error::QueryReturnedNoRows)
                             }
 
                             return Ok(sessions.pop().unwrap());
