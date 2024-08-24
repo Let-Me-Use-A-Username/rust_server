@@ -7,7 +7,7 @@ pub struct MessageBody {
 }
 
 ///Credentials model sent from client side.
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, Clone)]
 pub struct Credentials {
     pub username: String,
     pub password: String

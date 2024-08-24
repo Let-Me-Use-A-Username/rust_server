@@ -65,6 +65,10 @@ pub async fn verify_credentials(credentials: web::Json<MessageBody>) -> impl Res
                     })
                     .finish();
 
+                    //check if user has session
+                    //if yes check if expired
+                    //else create
+
                     let res = database_handler.insert_session(user_session);
                     println!("Session: {:?}", res);
 

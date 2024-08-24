@@ -2,16 +2,21 @@ Problem with cookie:
 Cookie “c8521faf-7d86-4a71-8279-777c2caa2adb” has been rejected because a non-HTTPS cookie can’t be set as “secure”.
 https://medium.com/@eng.fadishaar/step-by-step-guide-configuring-nginx-with-https-on-localhost-for-secure-web-application-testing-c78febc26c78
 
+
+
 =========TODO===========
 Server side:
     -Make better responses
-    -When user logs in verify session
+    -When user logs in, check session to see if expired
     -Validate session integrity (Research)
 
 Client side:
     -Check if session works correctly
     -Research on better redirect method
     -Save cookie 
+    -On signin, send user cookie if exists to server.                                                                     
+    -After signin , redirect user to homepage.                                                                            
+    -Sign in as guest and serve temporary cookie. 
 
 
 
@@ -19,7 +24,7 @@ Client side:
 
 ===========NOTES===========
 Cookies and Sessions:
-    -Check if used if (Uuid) generated already exists in database (collision).
+    -Check if used id (Uuid) generated already exists in database (collision).
     -Sessions are valid for one hour.
     -Cookies are deleted when the sessions ends, either via browser or via expiration.
 
