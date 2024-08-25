@@ -118,8 +118,7 @@ pub async fn save_credentials(credentials: web::Json<MessageBody>) -> impl Respo
                                 println!("User {:?}", rows);
                                 return HttpResponse::Created()
                                 .status(StatusCode::CREATED)
-                                .content_type(ContentType::json())
-                                .body("Account created.")
+                                .finish()
                             },
                             Err(error) => {
                                 println!("Error while inserting user to database: {:?}", error);
