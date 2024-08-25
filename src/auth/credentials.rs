@@ -1,4 +1,4 @@
-use actix_web::{cookie::Cookie, http::StatusCode, web, HttpResponse, HttpResponseBuilder, Responder};
+use actix_web::{cookie::Cookie, http::{header::ContentType, StatusCode}, web, HttpResponse, HttpResponseBuilder, Responder};
 use uuid::Uuid;
 
 use crate::{database::handler::DatabaseHandler, models::{database_models::User, server_models::MessageBody}};
@@ -118,6 +118,7 @@ pub async fn save_credentials(credentials: web::Json<MessageBody>) -> impl Respo
                                 println!("User {:?}", rows);
                                 return HttpResponse::Created()
                                 .status(StatusCode::CREATED)
+                                .content_type(ContentType::json())
                                 .body("Account created.")
                             },
                             Err(error) => {
