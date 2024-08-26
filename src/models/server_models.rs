@@ -3,7 +3,7 @@ use serde::Deserialize;
 ///Message body send from client. Includes Credentials.
 #[derive(Deserialize, Debug)]
 pub struct MessageBody {
-    pub content: Credentials
+    pub data: Credentials
 }
 
 ///Credentials model sent from client side.

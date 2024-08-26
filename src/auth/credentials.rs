@@ -10,8 +10,8 @@ use super::{hasher::Hasher, sessions::SessionManager};
 pub async fn verify_credentials(credentials: web::Json<MessageBody>) -> impl Responder {
     match DatabaseHandler::new(){
         Ok(database_handler) => {
-            let username = &credentials.content.username;
-            let password = &credentials.content.password;
+            let username = &credentials.data.username;
+            let password = &credentials.data.password;
 
             let hasher = Hasher::new();
             let hashed_username = hasher.hash_username(&username);
@@ -97,15 +97,15 @@ pub async fn verify_credentials(credentials: web::Json<MessageBody>) -> impl Res
 
 ///Handler that saves credentials to database.
 pub async fn save_credentials(credentials: web::Json<MessageBody>) -> impl Responder {
-    let username = &credentials.content.username;
-    let password = &credentials.content.password;
+    let username = &credentials.data.username;
+    let password = &credentials.data.password;
 
     if sanitize(password){
         match DatabaseHandler::new(){
             Ok(database_handler) => {
                 let mut hasher = Hasher::new();
                 let salt = hasher.generate_salt_argon2(username, password);
-                let hashed_username = hasher.hash_username(&credentials.content.username);
+                let hashed_username = hasher.hash_username(&username);
                 let hashed_password = hasher.hash_password(password, &salt);
     
                 //push to db
