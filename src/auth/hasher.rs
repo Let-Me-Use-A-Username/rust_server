@@ -1,8 +1,9 @@
-#![feature(min_const_gen)]
 use argon2::{password_hash::{Error, SaltString}, Argon2, PasswordHasher};
 use rand::Rng;
 use sha2::{Digest, Sha256};
 
+const ARRAY_SIZE: usize = 16;
+const HALF_SIZE: usize = 8;
 ///Object that implements the hashing functions. Sha256 and argon2 are generally used.
 pub struct Hasher{}
 impl Hasher{
@@ -26,9 +27,20 @@ impl Hasher{
 
     ///Salt generation from argon2.
     pub fn generate_salt_argon2(&mut self, username: &String, password: &String) -> SaltString{
-        let random_bytes: [u8;16] = rand::thread_rng().r#gen();
+        let random_bytes: [u8;ARRAY_SIZE] = rand::thread_rng().r#gen();
         let credentials = format!("{}{}{}", username, password, hex::encode(random_bytes));
-        return SaltString::encode_b64(credentials.as_bytes()).unwrap();
+        match SaltString::encode_b64(credentials.as_bytes()){
+            Ok(result) => {
+                return result
+            },
+            //If encoding fails, retry with half the size
+            Err(error) => {
+                println!("{:?}", error);
+                let halved_random_bytes: [u8;HALF_SIZE] = rand::thread_rng().r#gen();
+                let new_credentials = format!("{}{}{}", username, password, hex::encode(halved_random_bytes));
+                return SaltString::encode_b64(new_credentials.as_bytes()).unwrap()
+            },
+        }
     }
 
     ///Function that hashed a password.
