@@ -1,4 +1,4 @@
-use actix_web::{cookie::Cookie, http::{header::ContentType, StatusCode}, web, HttpResponse, HttpResponseBuilder, Responder};
+use actix_web::{cookie::Cookie, http::StatusCode, web, HttpResponse, HttpResponseBuilder, Responder};
 use uuid::Uuid;
 
 use crate::{database::handler::DatabaseHandler, models::{database_models::User, server_models::MessageBody}};
@@ -49,7 +49,7 @@ pub async fn verify_credentials(credentials: web::Json<MessageBody>) -> impl Res
                     println!("Error no users matched");
                     return HttpResponse::InternalServerError()
                     .status(StatusCode::INTERNAL_SERVER_ERROR)
-                    .body("Error no users matched.")
+                    .finish()
                 },
                 1 => {
                     let manager = SessionManager::new();
@@ -78,7 +78,7 @@ pub async fn verify_credentials(credentials: web::Json<MessageBody>) -> impl Res
                     println!("Error too many users matched");
                     return HttpResponse::InternalServerError()
                     .status(StatusCode::INTERNAL_SERVER_ERROR)
-                    .body("Error too many users matched.")
+                    .finish()
                 }
             }
             
@@ -88,7 +88,7 @@ pub async fn verify_credentials(credentials: web::Json<MessageBody>) -> impl Res
             println!("Error while fetching database: {:?}", error);
             return HttpResponse::InternalServerError()
             .status(StatusCode::INTERNAL_SERVER_ERROR)
-            .body("Error while fetching database instance.")
+            .finish()
         }
     }
 }
@@ -118,13 +118,13 @@ pub async fn save_credentials(credentials: web::Json<MessageBody>) -> impl Respo
                                 println!("User {:?}", rows);
                                 return HttpResponse::Created()
                                 .status(StatusCode::CREATED)
-                                .finish()
+                                .json("status : accepted")
                             },
                             Err(error) => {
                                 println!("Error while inserting user to database: {:?}", error);
                                 return HttpResponse::InternalServerError()
                                 .status(StatusCode::INTERNAL_SERVER_ERROR)
-                                .body("Error while appending user to database.")
+                                .finish()
                             },
                         }
                     },
@@ -132,7 +132,7 @@ pub async fn save_credentials(credentials: web::Json<MessageBody>) -> impl Respo
                         println!("Error while hashing password: {:?}", error);
                         return HttpResponse::InternalServerError()
                         .status(StatusCode::INTERNAL_SERVER_ERROR)
-                        .body("Error while hashing users password.")
+                        .finish()
                     },
                 }
             },
@@ -141,15 +141,14 @@ pub async fn save_credentials(credentials: web::Json<MessageBody>) -> impl Respo
                 println!("Error while opening database: {:?}", error);
                 return HttpResponse::InternalServerError()
                 .status(StatusCode::INTERNAL_SERVER_ERROR)
-                .body("Error while fetching database instance.")
+                .finish()
             },
         }
     }
 
     return HttpResponse::BadRequest()
     .status(StatusCode::BAD_REQUEST)
-    .body("Password doesn't fulfill sanitazation rules. Password must contain at least 8 characters.
-    One digit, one letter and one special character.")
+    .finish()
 }
 
 

@@ -14,7 +14,7 @@ serde = { version = "1.0", features = ["derive"]}           #Serializer/Deserial
 
 rusqlite = { version = "0.32.0", features = ["bundled"]}    #SQLite wrapper
 
-rand = "0.8.5"                                              #random generator
+rand = { version = "0.8.5", features = ["min_const_gen"]}                                              #random generator
 
 argon2 = "0.5.3"                                            #hash functions
 hex = "0.4.3"

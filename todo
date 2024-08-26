@@ -7,24 +7,29 @@ https://medium.com/@eng.fadishaar/step-by-step-guide-configuring-nginx-with-http
 =========TODO===========
 Server side:
     -Make better responses
-    -When user logs in, check session to see if expired
-    -Validate session integrity (Research)
+    -On login, check if cookie is valid, else issue new
+
+/check feature fix/
+    -When username + password length > 16 B64Encoder fails
+        thread 'actix-rt|system:0|arbiter:0' panicked at src/auth/hasher.rs:30:63:
+        called `Result::unwrap()` on an `Err` value: B64Encoding(InvalidLength)
 
 Client side:
     -Check if session works correctly
     -Research on better redirect method
     -Save cookie 
-    -On login, send user cookie (if exists) to server.                                                                     
+    -On login, send user cookie (if exists) to server.     
+                                                                    
     -After login , redirect user to homepage.                                                                            
     -Sign in as guest and serve temporary cookie. 
     -Popup (alert) not showing on mobile devices
-
+    -console.error(error) shows error every time
 
 
 
 ===========NOTES===========
 Cookies and Sessions:
-    -Check if used id (Uuid) generated already exists in database (collision).
+    -Check if user id (Uuid) generated already exists in database (collision).
     -Sessions are valid for one hour.
     -Cookies are deleted when the sessions ends, either via browser or via expiration.
 
