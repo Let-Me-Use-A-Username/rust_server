@@ -1,3 +1,4 @@
+#![feature(min_const_gen)]
 use argon2::{password_hash::{Error, SaltString}, Argon2, PasswordHasher};
 use rand::Rng;
 use sha2::{Digest, Sha256};
