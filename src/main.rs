@@ -1,4 +1,4 @@
-use actix_web::{middleware, web, App, HttpServer};
+use actix_web::{web, App, HttpServer};
 use database::handler::DatabaseHandler;
 
 mod database;

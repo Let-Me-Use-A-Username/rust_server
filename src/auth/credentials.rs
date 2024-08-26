@@ -40,7 +40,7 @@ pub async fn verify_credentials(credentials: web::Json<MessageBody>) -> impl Res
                     println!("Error while fetching users: {:?}", error);
                     return HttpResponse::InternalServerError()
                     .status(StatusCode::INTERNAL_SERVER_ERROR)
-                    .body("Error while fetching users from database.")
+                    .json("Status : Database error. No such user.")
                 },
             };
 
@@ -49,7 +49,7 @@ pub async fn verify_credentials(credentials: web::Json<MessageBody>) -> impl Res
                     println!("Error no users matched");
                     return HttpResponse::InternalServerError()
                     .status(StatusCode::INTERNAL_SERVER_ERROR)
-                    .finish()
+                    .json("Status : Database error. User credentials don't match.")
                 },
                 1 => {
                     let manager = SessionManager::new();
@@ -61,9 +61,10 @@ pub async fn verify_credentials(credentials: web::Json<MessageBody>) -> impl Res
                         Cookie::build(user.get_id().to_string(), user_session.get_id().to_string())
                             .http_only(true)
                             .secure(true)
+                            .same_site(actix_web::cookie::SameSite::None)
                             .finish()
                     })
-                    .finish();
+                    .json("Status : User validated.");
 
                     //check if user has session
                     //if yes check if expired
@@ -78,7 +79,7 @@ pub async fn verify_credentials(credentials: web::Json<MessageBody>) -> impl Res
                     println!("Error too many users matched");
                     return HttpResponse::InternalServerError()
                     .status(StatusCode::INTERNAL_SERVER_ERROR)
-                    .finish()
+                    .json("Status : Database error.")
                 }
             }
             
@@ -88,7 +89,7 @@ pub async fn verify_credentials(credentials: web::Json<MessageBody>) -> impl Res
             println!("Error while fetching database: {:?}", error);
             return HttpResponse::InternalServerError()
             .status(StatusCode::INTERNAL_SERVER_ERROR)
-            .finish()
+            .json("Status : Database error. Initialization failed.")
         }
     }
 }
@@ -118,13 +119,13 @@ pub async fn save_credentials(credentials: web::Json<MessageBody>) -> impl Respo
                                 println!("User {:?}", rows);
                                 return HttpResponse::Created()
                                 .status(StatusCode::CREATED)
-                                .json("status : accepted")
+                                .json("Status : User created.")
                             },
                             Err(error) => {
                                 println!("Error while inserting user to database: {:?}", error);
                                 return HttpResponse::InternalServerError()
                                 .status(StatusCode::INTERNAL_SERVER_ERROR)
-                                .finish()
+                                .json("Status : Database error.")
                             },
                         }
                     },
@@ -132,7 +133,7 @@ pub async fn save_credentials(credentials: web::Json<MessageBody>) -> impl Respo
                         println!("Error while hashing password: {:?}", error);
                         return HttpResponse::InternalServerError()
                         .status(StatusCode::INTERNAL_SERVER_ERROR)
-                        .finish()
+                        .json("Status : Hasher error.")
                     },
                 }
             },
@@ -141,14 +142,14 @@ pub async fn save_credentials(credentials: web::Json<MessageBody>) -> impl Respo
                 println!("Error while opening database: {:?}", error);
                 return HttpResponse::InternalServerError()
                 .status(StatusCode::INTERNAL_SERVER_ERROR)
-                .finish()
+                .json("Status : Database error. Connection dropped.")
             },
         }
     }
 
     return HttpResponse::BadRequest()
     .status(StatusCode::BAD_REQUEST)
-    .finish()
+    .json("Status : Invalid password.")
 }
 
 
