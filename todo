@@ -13,8 +13,7 @@ Client side:
     -Check if session works correctly
     -Save cookie 
     -On login, send user cookie (if exists) to server.     
-                                                                    
-    -After login , redirect user to homepage.                                                                            
+                                                                                                                      
     -Sign in as guest and serve temporary cookie. 
     -Popup (alert) not showing on mobile devices
     -console.error(error) shows error every time

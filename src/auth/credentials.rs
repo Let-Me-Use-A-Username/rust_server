@@ -59,7 +59,6 @@ pub async fn verify_credentials(credentials: web::Json<MessageBody>) -> impl Res
                     let response = HttpResponseBuilder::new(StatusCode::ACCEPTED)
                     .cookie({
                         Cookie::build(user.get_id().to_string(), user_session.get_id().to_string())
-                            .http_only(true)
                             .secure(true)
                             .same_site(actix_web::cookie::SameSite::None)
                             .finish()
