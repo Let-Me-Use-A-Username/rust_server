@@ -23,10 +23,10 @@ impl SessionManager{
     }
     
     ///Validate a session.
-    pub fn validate_session(&self, session: Session, handler: DatabaseHandler) -> Result<bool, Error>{
+    pub fn validate_session(&self, session_id: Uuid, handler: DatabaseHandler) -> Result<bool, Error>{
         let now = OffsetDateTime::now_utc().unix_timestamp();
 
-        match handler.get_session(session.get_id()){
+        match handler.get_session(&session_id){
             Ok(session) => {
 
                 //expired

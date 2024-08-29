@@ -8,10 +8,23 @@ use super::{hasher::Hasher, sessions::SessionManager};
 ///Handler that verifies credentials.
 ///Creates a new session and sends cookie to client side.
 pub async fn verify_credentials(request: HttpRequest, body: web::Json<MessageBody>) -> impl Responder {
-    let cookies = request.cookies();
-    println!("cookies: {:?}", cookies);
     match DatabaseHandler::new(){
         Ok(database_handler) => {
+            let manager = SessionManager::new();
+
+            match request.cookies(){
+                Ok(cookies) => {
+                    if cookies.len() == 0 || cookies.len() > 1{
+                        todo!()
+                    }
+                    let cookie = cookies.clone().pop().unwrap().to_string();
+                    println!("cookie {:?}", cookie);
+                },
+                Err(error) => {
+                    println!("Error: {:?}", error);
+                },
+            }
+
             let username = &body.data.username;
             let password = &body.data.password;
 
@@ -54,7 +67,6 @@ pub async fn verify_credentials(request: HttpRequest, body: web::Json<MessageBod
                     .json("Status : Database error. User credentials don't match.")
                 },
                 1 => {
-                    let manager = SessionManager::new();
                     let user = matching_user.pop().unwrap();
                     let user_session = manager.create_session(user.get_id());
 
