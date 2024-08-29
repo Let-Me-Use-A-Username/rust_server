@@ -1,4 +1,4 @@
-use actix_web::{cookie::Cookie, http::StatusCode, web, HttpResponse, HttpResponseBuilder, Responder};
+use actix_web::{cookie::{time::Duration, Cookie}, http::StatusCode, web, HttpRequest, HttpResponse, HttpResponseBuilder, Responder};
 use uuid::Uuid;
 
 use crate::{database::handler::DatabaseHandler, models::{database_models::User, server_models::MessageBody}};
@@ -7,11 +7,13 @@ use super::{hasher::Hasher, sessions::SessionManager};
 
 ///Handler that verifies credentials.
 ///Creates a new session and sends cookie to client side.
-pub async fn verify_credentials(credentials: web::Json<MessageBody>) -> impl Responder {
+pub async fn verify_credentials(request: HttpRequest, body: web::Json<MessageBody>) -> impl Responder {
+    let cookies = request.cookies();
+    println!("cookies: {:?}", cookies);
     match DatabaseHandler::new(){
         Ok(database_handler) => {
-            let username = &credentials.data.username;
-            let password = &credentials.data.password;
+            let username = &body.data.username;
+            let password = &body.data.password;
 
             let hasher = Hasher::new();
             let hashed_username = hasher.hash_username(&username);
@@ -61,6 +63,7 @@ pub async fn verify_credentials(credentials: web::Json<MessageBody>) -> impl Res
                         Cookie::build(user.get_id().to_string(), user_session.get_id().to_string())
                             .secure(true)
                             .same_site(actix_web::cookie::SameSite::None)
+                            .max_age(Duration::minutes(60))
                             .finish()
                     })
                     .json("Status : User validated.");
