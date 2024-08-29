@@ -15,8 +15,9 @@ pub async fn verify_credentials(request: HttpRequest, body: web::Json<MessageBod
             match request.cookies(){
                 Ok(cookies) => {
                     if cookies.len() == 0 || cookies.len() > 1{
-                        todo!()
+                        cookies.iter().for_each(|x| println!("cookie iter: {:?}", x.to_string()))
                     }
+
                     let cookie = cookies.clone().pop().unwrap().to_string();
                     println!("cookie {:?}", cookie);
                 },
