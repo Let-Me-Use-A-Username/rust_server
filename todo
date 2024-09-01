@@ -7,16 +7,14 @@ https://medium.com/@eng.fadishaar/step-by-step-guide-configuring-nginx-with-http
 =========TODO===========
 Server side:
     -On login, check if cookie is valid (from id), else issue new
+    -Check what happens when no cookies are assigned. Credentials line 60.
 
 
 Client side:
-    -Check if session works correctly
-    -Save cookie 
-    -On login, send user cookie (if exists) to server.     
+    -Check if session works correctly 
                                                                                                                       
     -Sign in as guest and serve temporary cookie. 
     -Popup (alert) not showing on mobile devices
-    -console.error(error) shows error every time
 
 
 

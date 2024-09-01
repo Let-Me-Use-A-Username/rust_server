@@ -1,7 +1,7 @@
 use actix_web::{cookie::{time::Duration, Cookie}, http::StatusCode, web, HttpRequest, HttpResponse, HttpResponseBuilder, Responder};
 use uuid::Uuid;
 
-use crate::{database::handler::DatabaseHandler, models::{database_models::User, server_models::MessageBody}};
+use crate::{database::handler::DatabaseHandler, models::{database_models::{Session, User}, server_models::MessageBody}};
 
 use super::{hasher::Hasher, sessions::SessionManager};
 
@@ -10,22 +10,6 @@ use super::{hasher::Hasher, sessions::SessionManager};
 pub async fn verify_credentials(request: HttpRequest, body: web::Json<MessageBody>) -> impl Responder {
     match DatabaseHandler::new(){
         Ok(database_handler) => {
-            let manager = SessionManager::new();
-
-            match request.cookies(){
-                Ok(cookies) => {
-                    if cookies.len() == 0 || cookies.len() > 1{
-                        cookies.iter().for_each(|x| println!("cookie iter: {:?}", x.to_string()))
-                    }
-
-                    let cookie = cookies.clone().pop().unwrap().to_string();
-                    println!("cookie {:?}", cookie);
-                },
-                Err(error) => {
-                    println!("Error: {:?}", error);
-                },
-            }
-
             let username = &body.data.username;
             let password = &body.data.password;
 
@@ -52,7 +36,6 @@ pub async fn verify_credentials(request: HttpRequest, body: web::Json<MessageBod
                     });
                 },
                 Err(error) => {
-                    //HTTP ERROR response
                     println!("Error while fetching users: {:?}", error);
                     return HttpResponse::InternalServerError()
                     .status(StatusCode::INTERNAL_SERVER_ERROR)
@@ -69,7 +52,34 @@ pub async fn verify_credentials(request: HttpRequest, body: web::Json<MessageBod
                 },
                 1 => {
                     let user = matching_user.pop().unwrap();
-                    let user_session = manager.create_session(user.get_id());
+                    let mut manager = SessionManager::new();
+
+                    let user_session: Session;
+
+                    match request.cookies(){
+                        Ok(cookies) => {
+                            let cookie_iter: Vec<String> = cookies.iter().map(|x| x.to_string()).collect();
+                            println!("User cookies: {:?}", cookie_iter);
+                            //Create or renew session.
+                            match manager.verify_cookies(cookie_iter, user.get_id(), &database_handler){
+                                Ok(session) => {
+                                    user_session = session;
+                                },
+                                Err(error) => {
+                                    println!("Error while parsing cookies: {:?}", error);
+
+                                    return HttpResponse::InternalServerError()
+                                    .json("Status: Cookie error")
+                                },
+                            }
+                        },
+                        Err(error) => {
+                            println!("Error while parsing cookies: {:?}", error);
+
+                            return HttpResponse::InternalServerError()
+                            .json("Status: Cookie error")
+                        },
+                    }
 
                     let response = HttpResponseBuilder::new(StatusCode::ACCEPTED)
                     .cookie({
@@ -80,10 +90,6 @@ pub async fn verify_credentials(request: HttpRequest, body: web::Json<MessageBod
                             .finish()
                     })
                     .json("Status : User validated.");
-
-                    //check if user has session
-                    //if yes check if expired
-                    //else create
 
                     let res = database_handler.insert_session(user_session);
                     println!("Session: {:?}", res);

@@ -148,7 +148,7 @@ impl DatabaseHandler{
     }
 
     ///Get session with matching id.
-    pub fn get_session(&self, session_id: &Uuid) -> Result<Session, Error>{
+    pub fn get_session_from_id(&self, session_id: &Uuid) -> Result<Option<Session>, Error>{
         let statement = self.connection.prepare(
             "SELECT * FROM session WHERE session_id = ?1"
         );
@@ -174,11 +174,12 @@ impl DatabaseHandler{
                             ))
                         },
                         None => {
-                            if sessions.len() == 0 || sessions.len() > 1{
-                                return Err(Error::QueryReturnedNoRows)
+                            println!("Sessions from db: {:?}", sessions);
+                            if sessions.len() == 0{
+                                return Ok(None)
                             }
 
-                            return Ok(sessions.pop().unwrap());
+                            return Ok(Some(sessions.pop().unwrap()));
                         },
                     }
                 }

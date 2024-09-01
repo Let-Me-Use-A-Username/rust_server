@@ -44,6 +44,7 @@ impl User{
     }
 }
 
+#[derive(Debug)]
 ///Session model.
 pub struct Session{
     id: Uuid,
@@ -76,5 +77,13 @@ impl Session{
 
     pub fn get_expires(&self) -> &i64{
         return &self.expires
+    }
+
+    pub fn set_expires(&mut self, expires: i64) {
+        self.expires = expires;
+    }
+
+    pub fn set_created(&mut self, created: i64) {
+        self.created = created;
     }
 }
