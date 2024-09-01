@@ -64,6 +64,10 @@ pub async fn verify_credentials(request: HttpRequest, body: web::Json<MessageBod
                             match manager.verify_cookies(cookie_iter, user.get_id(), &database_handler){
                                 Ok(session) => {
                                     user_session = session;
+                                    
+                                    let res = database_handler.update_session(&user_session);
+                                    println!("Session: {:?}", res);
+
                                 },
                                 Err(error) => {
                                     println!("Error while parsing cookies: {:?}", error);
@@ -90,9 +94,6 @@ pub async fn verify_credentials(request: HttpRequest, body: web::Json<MessageBod
                             .finish()
                     })
                     .json("Status : User validated.");
-
-                    let res = database_handler.insert_session(user_session);
-                    println!("Session: {:?}", res);
 
                     return response
                 },

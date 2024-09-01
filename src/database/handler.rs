@@ -191,7 +191,7 @@ impl DatabaseHandler{
     }
 
     ///Insert new session to database.
-    pub fn insert_session(&self, session: Session) -> Result<usize, Error>{
+    pub fn insert_session(&self, session: &Session) -> Result<usize, Error>{
         let statement = self.connection.prepare(
             "INSERT INTO session(session_id, user_id, created, expires) 
             VALUES (?1, ?2, ?3, ?4)"
@@ -203,6 +203,25 @@ impl DatabaseHandler{
             session.get_created(),
             session.get_expires()
         ))
+    }
+
+    ///Updates or inserts a session.
+    pub fn update_session(&self, session: &Session) -> Result<usize, Error>{
+        let result = self.get_session_from_id(session.get_id());
+
+        if result.is_ok_and(|x| x.is_some()){
+            //update
+            let statement = self.connection.prepare(
+                "UPDATE session SET created = ?1, expires = ?2 WHERE session_id = ?3"
+            );
+            
+            return statement.unwrap().execute((
+                session.get_created(), 
+                session.get_expires(), 
+                session.get_id().to_string()
+            ))
+        }
+        return self.insert_session(session);
     }
 
 }

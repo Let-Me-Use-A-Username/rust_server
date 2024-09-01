@@ -93,12 +93,12 @@ impl SessionManager{
                 match self.validate_session(session.get_id(), handler){
                     Ok(nexp) => {
                         match nexp{
-                            //valid
-                            true => {
+                            //not expired
+                            false => {
                                 return Ok(self.renew_session(session.get_id(), session.get_user_id()))
                             },
                             //expired
-                            false => {
+                            true => {
                                 //drop
                                 //create new session
                                 return Ok(self.renew_session(session.get_id(), session.get_user_id()))
