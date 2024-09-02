@@ -7,7 +7,6 @@ use super::{hasher::Hasher, sessions::SessionManager};
 
 ///Handler that verifies credentials.
 ///Creates a new session and sends cookie to client side.
-#[actix_web::get("/verify")]
 pub async fn verify_credentials(request: HttpRequest, body: web::Json<MessageBody>) -> impl Responder {
     match DatabaseHandler::new(){
         Ok(database_handler) => {
@@ -118,7 +117,6 @@ pub async fn verify_credentials(request: HttpRequest, body: web::Json<MessageBod
 
 
 ///Handler that saves credentials to database.
-#[actix_web::get("/sanitize")]
 pub async fn save_credentials(credentials: web::Json<MessageBody>) -> impl Responder {
     let username = &credentials.data.username;
     let password = &credentials.data.password;
