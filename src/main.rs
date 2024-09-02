@@ -30,14 +30,8 @@ async fn main() -> std::io::Result<()>{
     HttpServer::new(move ||{
         App::new()
             .wrap(Logger::default())
-            .service(
-                web::resource("/verify")
-                .route(web::get().to(verify_credentials))
-            )
-            .service(
-                web::resource("/sanitize")
-                .route(web::get().to(save_credentials))
-            )
+            .route("/verify", web::get().to(verify_credentials))
+            .route("/sanitize", web::get().to(save_credentials))
     })
     .bind("127.0.0.1:8081")?
     .run()
