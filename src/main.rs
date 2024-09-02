@@ -45,7 +45,7 @@ pub fn cookie_handler() -> SessionMiddleware<CookieSessionStore> {
     SessionMiddleware::builder(
 	    CookieSessionStore::default(), Key::from(&[0; 64])
     )
-    .cookie_name(String::from("some name"))
+    .cookie_name(String::from("user-cookie"))
     .cookie_secure(true)
     .cookie_http_only(true)
     .cookie_same_site(actix_web::cookie::SameSite::Strict)

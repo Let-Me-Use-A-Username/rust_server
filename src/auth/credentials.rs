@@ -1,10 +1,10 @@
 use actix_session::Session;
-use actix_web::{cookie::{time::Duration, Cookie}, http::StatusCode, web, HttpRequest, HttpResponse, HttpResponseBuilder, Responder};
+use actix_web::{http::StatusCode, web, HttpResponse, HttpResponseBuilder, Responder};
 use uuid::Uuid;
 
 use crate::{database::handler::DatabaseHandler, models::{database_models::User, server_models::MessageBody}};
 
-use super::{hasher::Hasher, sessions::SessionManager};
+use super::hasher::Hasher;
 
 ///Handler that verifies credentials.
 ///Creates a new session and sends cookie to client side.
@@ -53,25 +53,30 @@ pub async fn verify_credentials(request: Session, body: web::Json<MessageBody>) 
                 },
                 1 => {
                     let user = matching_user.pop().unwrap();
-                    let mut manager = SessionManager::new();
-
-                    let user_session: Session;
 
                     match request.get::<String>("value"){
                         Ok(value) => {
-                            if value.is_some(){
-                                println!("Session value: {:?}", value.unwrap())
-                            }
-                            else{
-                                request.insert("name", Uuid::new_v4().to_string());
-                                request.insert("value", user.get_id().to_string());
+                            match value{
+                                Some(val) => {
+                                    println!("Session value: {:?}", val)
+                                },
+                                None => {
+                                    let name_ins_status = request.insert("name", Uuid::new_v4().to_string());
+                                    let val_ins_status = request.insert("value", user.get_id().to_string());
+    
+                                    if !name_ins_status.is_ok() && !val_ins_status.is_ok(){
+                                        let response = HttpResponseBuilder::new(StatusCode::INTERNAL_SERVER_ERROR)
+                                        .json("Status : Error during session creation.");
+                    
+                                        return response
+                                    }
+                                },
                             }
                         },
                         Err(error) => {
                             println!("Error: {:?}", error)
                         },
                     }
-
                     let response = HttpResponseBuilder::new(StatusCode::ACCEPTED)
                     .json("Status : User validated.");
 
