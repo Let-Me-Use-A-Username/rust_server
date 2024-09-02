@@ -11,7 +11,6 @@ use crate::auth::credentials::{verify_credentials, save_credentials};
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()>{
-    let secret_key = Key::generate();
     println!("Starting server...");
     let handler = DatabaseHandler::new();
 

@@ -1,5 +1,5 @@
 use actix_session::Session;
-use actix_web::{http::StatusCode, web, HttpResponse, HttpResponseBuilder, Responder};
+use actix_web::{http::StatusCode, web, HttpRequest, HttpResponse, HttpResponseBuilder, Responder};
 use uuid::Uuid;
 
 use crate::{database::handler::DatabaseHandler, models::{database_models::User, server_models::MessageBody}};
@@ -8,7 +8,7 @@ use super::{hasher::Hasher, sessions::SessionManager};
 
 ///Handler that verifies credentials.
 ///Creates a new session and sends cookie to client side.
-pub async fn verify_credentials(request: Session, body: web::Json<MessageBody>) -> impl Responder {
+pub async fn verify_credentials(request: HttpRequest, body: web::Json<MessageBody>) -> impl Responder {
     match DatabaseHandler::new(){
         Ok(database_handler) => {
             let username = &body.data.username;
@@ -57,20 +57,7 @@ pub async fn verify_credentials(request: Session, body: web::Json<MessageBody>) 
 
                     let user_session: Session;
 
-                    match request.get::<String>("value"){
-                        Ok(value) => {
-                            if value.is_some(){
-                                println!("Session value: {:?}", value.unwrap())
-                            }
-                            else{
-                                request.insert("name", Uuid::new_v4().to_string());
-                                request.insert("value", user.get_id().to_string());
-                            }
-                        },
-                        Err(error) => {
-                            println!("Error: {:?}", error)
-                        },
-                    }
+                    
 
                     let response = HttpResponseBuilder::new(StatusCode::ACCEPTED)
                     .json("Status : User validated.");
