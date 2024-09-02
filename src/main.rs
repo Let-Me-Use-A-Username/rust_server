@@ -30,10 +30,6 @@ async fn main() -> std::io::Result<()>{
     HttpServer::new(move ||{
         App::new()
             .wrap(Logger::default())
-            .wrap(SessionMiddleware::new(
-                CookieSessionStore::default(), 
-                secret_key.clone(),
-            ))
             .service(verify_credentials)
             .service(save_credentials)
     })
