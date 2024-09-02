@@ -1,13 +1,15 @@
-use actix_web::{cookie::{time::Duration, Cookie}, http::StatusCode, web, HttpRequest, HttpResponse, HttpResponseBuilder, Responder};
+use actix_session::Session;
+use actix_web::{cookie::{time::Duration, Cookie}, http::StatusCode, web, HttpResponse, HttpResponseBuilder, Responder};
 use uuid::Uuid;
 
-use crate::{database::handler::DatabaseHandler, models::{database_models::{Session, User}, server_models::MessageBody}};
+use crate::{database::handler::DatabaseHandler, models::{database_models::User, server_models::MessageBody}};
 
 use super::{hasher::Hasher, sessions::SessionManager};
 
 ///Handler that verifies credentials.
 ///Creates a new session and sends cookie to client side.
-pub async fn verify_credentials(request: HttpRequest, body: web::Json<MessageBody>) -> impl Responder {
+#[actix_web::get("/verify")]
+pub async fn verify_credentials(request: Session, body: web::Json<MessageBody>) -> impl Responder {
     match DatabaseHandler::new(){
         Ok(database_handler) => {
             let username = &body.data.username;
@@ -56,43 +58,22 @@ pub async fn verify_credentials(request: HttpRequest, body: web::Json<MessageBod
 
                     let user_session: Session;
 
-                    match request.cookies(){
-                        Ok(cookies) => {
-                            let cookie_iter: Vec<String> = cookies.iter().map(|x| x.to_string()).collect();
-                            println!("User cookies: {:?}", cookie_iter);
-                            //Create or renew session.
-                            match manager.verify_cookies(cookie_iter, user.get_id(), &database_handler){
-                                Ok(session) => {
-                                    user_session = session;
-                                    
-                                    let res = database_handler.update_session(&user_session);
-                                    println!("Session: {:?}", res);
-
-                                },
-                                Err(error) => {
-                                    println!("Error while parsing cookies: {:?}", error);
-
-                                    return HttpResponse::InternalServerError()
-                                    .json("Status: Cookie error")
-                                },
+                    match request.get::<String>("value"){
+                        Ok(value) => {
+                            if value.is_some(){
+                                println!("Session value: {:?}", value.unwrap())
+                            }
+                            else{
+                                request.insert("name", Uuid::new_v4().to_string());
+                                request.insert("value", user.get_id().to_string());
                             }
                         },
                         Err(error) => {
-                            println!("Error while parsing cookies: {:?}", error);
-
-                            return HttpResponse::InternalServerError()
-                            .json("Status: Cookie error")
+                            println!("Error: {:?}", error)
                         },
                     }
 
                     let response = HttpResponseBuilder::new(StatusCode::ACCEPTED)
-                    .cookie({
-                        Cookie::build(user.get_id().to_string(), user_session.get_id().to_string())
-                            .secure(true)
-                            .same_site(actix_web::cookie::SameSite::None)
-                            .max_age(Duration::minutes(60))
-                            .finish()
-                    })
                     .json("Status : User validated.");
 
                     return response
@@ -118,6 +99,7 @@ pub async fn verify_credentials(request: HttpRequest, body: web::Json<MessageBod
 
 
 ///Handler that saves credentials to database.
+#[actix_web::get("/sanitize")]
 pub async fn save_credentials(credentials: web::Json<MessageBody>) -> impl Responder {
     let username = &credentials.data.username;
     let password = &credentials.data.password;

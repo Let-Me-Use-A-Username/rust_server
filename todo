@@ -1,13 +1,13 @@
-Problem with cookie:
-Cookie “c8521faf-7d86-4a71-8279-777c2caa2adb” has been rejected because a non-HTTPS cookie can’t be set as “secure”.
-https://medium.com/@eng.fadishaar/step-by-step-guide-configuring-nginx-with-https-on-localhost-for-secure-web-application-testing-c78febc26c78
-
-
-
 =========TODO===========
 Server side:
     -On login, check if cookie is valid (from id), else issue new
     -Check what happens when no cookies are assigned. Credentials line 60.
+
+    -New implementation on cookies and session using info form [main line:40]
+        -Either implement a middleware (middleware.rs)
+        -Pass session into handlers
+        -both?
+        
 
 
 Client side:

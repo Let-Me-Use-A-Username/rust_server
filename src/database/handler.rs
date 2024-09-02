@@ -197,6 +197,8 @@ impl DatabaseHandler{
             VALUES (?1, ?2, ?3, ?4)"
         );
 
+        println!("Inserted Session");
+
         return statement.unwrap().execute((
             session.get_id().to_string(),
             session.get_user_id().to_string(),
@@ -215,12 +217,15 @@ impl DatabaseHandler{
                 "UPDATE session SET created = ?1, expires = ?2 WHERE session_id = ?3"
             );
             
+            println!("Updated Session");
+
             return statement.unwrap().execute((
                 session.get_created(), 
                 session.get_expires(), 
                 session.get_id().to_string()
             ))
         }
+
         return self.insert_session(session);
     }
 

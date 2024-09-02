@@ -4,8 +4,9 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-
 actix-web = { version = "4", features = ["rustls-0_23"] }   #web functionality
+actix-session = { version = "0.10.0", features = ["cookie-session"] }
+futures-util = "0.3.30"
 
 rustls = { version = "0.23", optional = true}
 rustls-pemfile = "2"
@@ -14,7 +15,7 @@ serde = { version = "1.0", features = ["derive"]}           #Serializer/Deserial
 
 rusqlite = { version = "0.32.0", features = ["bundled"]}    #SQLite wrapper
 
-rand = { version = "0.8.5" }                                              #random generator
+rand = { version = "0.8.5" }                                #random generator
 
 argon2 = "0.5.3"                                            #hash functions
 hex = "0.4.3"
