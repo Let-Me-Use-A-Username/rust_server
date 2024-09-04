@@ -1,12 +1,9 @@
 =========TODO===========
 Server side:
-    -On login, check if cookie is valid (from id), else issue new
-    -Check what happens when no cookies are assigned. Credentials line 60.
-
-    -New implementation on cookies and session using info form [main line:40]
-        -Either implement a middleware (middleware.rs)
-        -Pass session into handlers
-        -both?
+    -Check if cookie is server correctly (main)
+    -Check if session works correctly (credentials)
+        -If served save to database
+        -If validating, check against database
         
 
 

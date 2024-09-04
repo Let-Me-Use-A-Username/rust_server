@@ -59,6 +59,7 @@ pub async fn verify_credentials(request: Session, body: web::Json<MessageBody>) 
                             match value{
                                 Some(val) => {
                                     println!("Session value: {:?}", val)
+                                    //check if value(user id) matches
                                 },
                                 None => {
                                     let name_ins_status = request.insert("name", Uuid::new_v4().to_string());
@@ -67,7 +68,7 @@ pub async fn verify_credentials(request: Session, body: web::Json<MessageBody>) 
                                     if !name_ins_status.is_ok() && !val_ins_status.is_ok(){
                                         let response = HttpResponseBuilder::new(StatusCode::INTERNAL_SERVER_ERROR)
                                         .json("Status : Error during session creation.");
-                    
+                                        //save to database
                                         return response
                                     }
                                 },
