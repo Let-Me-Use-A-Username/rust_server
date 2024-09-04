@@ -187,7 +187,7 @@ impl DatabaseHandler{
     ///Insert new session to database.
     pub fn insert_session(&self, session: &Session) -> Result<usize, Error>{
         let statement = self.connection.prepare(
-            "INSERT INTO session(session_id, user_id, created, expires) 
+            "INSERT INTO session(session_id, user_id) 
             VALUES (?1, ?2)"
         );
 
