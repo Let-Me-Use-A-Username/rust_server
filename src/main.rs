@@ -1,5 +1,5 @@
 use actix_session::{config::{BrowserSession, CookieContentSecurity}, storage::CookieSessionStore, SessionMiddleware};
-use actix_web::{cookie::Key, middleware::Logger, web, App, HttpServer};
+use actix_web::{cookie::Key, guard, middleware::Logger, web, App, HttpServer};
 use database::handler::DatabaseHandler;
 
 mod database;
@@ -30,8 +30,20 @@ async fn main() -> std::io::Result<()>{
         App::new()
             .wrap(Logger::default())
             .wrap(cookie_handler())
-            .route("/verify", web::post().to(verify_credentials))
-            .route("/sanitize", web::post().to(save_credentials))
+            .service(
+                web::resource("/verify").route(
+                web::route()
+                    .guard(guard::Post())
+                    .to(verify_credentials)
+                )
+            )
+            .service(
+                web::resource("/sanitize").route(
+                    web::route()
+                        .guard(guard::Post())
+                        .to(save_credentials)    
+                )
+            )
     })
     .bind("127.0.0.1:8081")?
     .run()

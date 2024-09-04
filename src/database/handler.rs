@@ -56,17 +56,6 @@ impl DatabaseHandler{
         return Ok(user.unwrap() + session.unwrap())
     }
 
-    ///Drop all tables for re-initialization.
-    pub fn drop_tables(&self) -> Result<usize, Error>{
-        let res = self.connection.execute(
-            "DROP TABLE IF EXISTS user;
-                DROP TABLE IF EXISTS session",
-            (),
-        );
-
-        return res;
-    }
-
     ///Query database for debugging.
     pub fn query_db(&self) {
         loop{

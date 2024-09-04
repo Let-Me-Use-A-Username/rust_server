@@ -1,15 +1,9 @@
 =========TODO===========
 Server side:
-    -Check if cookie is server correctly (main)
-    -Check if session works correctly (credentials)
-        -If served save to database
-        -If validating, check against database
         
 
 
-Client side:
-    -Check if session works correctly 
-                                                                                                                      
+Client side:                                                                            
     -Sign in as guest and serve temporary cookie. 
     -Popup (alert) not showing on mobile devices
 
@@ -27,23 +21,4 @@ Client side:
 ===========NOTES===========
 Cookies and Sessions:
     -Check if user id (Uuid) generated already exists in database (collision).
-    -Sessions are valid for one hour.
-    -Cookies are deleted when the sessions ends, either via browser or via expiration.
-
-
-Database:
-    Two choices exist for database connection:
-
-        1) Connection per request
-            +Resource efficient
-            -Request overhead
-
-        2) Persistent connection
-            +Performance
-            -Resource consumption
-
-        3) Pooling
-            Middle ground between the two.
-            Keep a connection pool and when a transaction takes place,
-            borrow a connection and when done return it.
-            Needs research.
+    -Cookies are deleted when the sessions ends.
