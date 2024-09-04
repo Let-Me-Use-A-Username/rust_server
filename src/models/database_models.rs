@@ -5,7 +5,6 @@ use uuid::Uuid;
 ///User model.
 #[derive(Clone)]
 pub struct User{
-    //FIXME : After fixing database datatypes, fix here as well
     id: Uuid,
     username: String,
     password: String,
@@ -48,18 +47,14 @@ impl User{
 ///Session model.
 pub struct Session{
     id: Uuid,
-    used_id: Uuid,
-    created: i64,
-    expires: i64
+    user_id: Uuid,
 }
 
 impl Session{
-    pub fn new(session_id: Uuid, user_id: Uuid, created: i64, expires: i64) -> Self{
+    pub fn new(session_id: Uuid, user_id: Uuid) -> Self{
         Self { 
             id: session_id, 
-            used_id: user_id, 
-            created: created, 
-            expires: expires 
+            user_id: user_id
         }
     }
 
@@ -68,22 +63,6 @@ impl Session{
     }
 
     pub fn get_user_id(&self) -> &Uuid{
-        return &self.used_id
-    }
-
-    pub fn get_created(&self) -> &i64{
-        return &self.created
-    }
-
-    pub fn get_expires(&self) -> &i64{
-        return &self.expires
-    }
-
-    pub fn set_expires(&mut self, expires: i64) {
-        self.expires = expires;
-    }
-
-    pub fn set_created(&mut self, created: i64) {
-        self.created = created;
+        return &self.user_id
     }
 }

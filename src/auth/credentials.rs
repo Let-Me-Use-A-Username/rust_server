@@ -1,10 +1,12 @@
+use std::str::FromStr;
+
 use actix_session::Session;
 use actix_web::{http::StatusCode, web, HttpResponse, HttpResponseBuilder, Responder};
 use uuid::Uuid;
 
 use crate::{database::handler::DatabaseHandler, models::{database_models::User, server_models::MessageBody}};
 
-use super::hasher::Hasher;
+use super::{hasher::Hasher, sessions::SessionManager};
 
 ///Handler that verifies credentials.
 ///Creates a new session and sends cookie to client side.
@@ -45,22 +47,28 @@ pub async fn verify_credentials(request: Session, body: web::Json<MessageBody>) 
             };
 
             match matching_user.len(){
-                0 => {
-                    println!("Error no users matched");
-                    return HttpResponse::InternalServerError()
-                    .status(StatusCode::INTERNAL_SERVER_ERROR)
-                    .json("Status : Database error. User credentials don't match.")
-                },
                 1 => {
                     let user = matching_user.pop().unwrap();
+                    let manager = SessionManager::new();
 
                     match request.get::<String>("value"){
                         Ok(value) => {
                             match value{
-                                Some(val) => {
-                                    println!("Session name: {:?}", request.get::<String>("name"));
-                                    println!("Session value: {:?}", val)
-                                    //check if value(user id) matches
+                                Some(session_value) => {
+                                    let session_name = request.get::<String>("name").unwrap();
+                                    println!("Session name: {:?}", session_name);
+                                    println!("Session value: {:?}", session_value);
+                                    
+                                    //check if session value (user id) matched user id from database
+                                    if !user.get_id().eq(&Uuid::from_str(session_value.as_str()).unwrap()){
+                                        let response = HttpResponseBuilder::new(StatusCode::INTERNAL_SERVER_ERROR)
+                                        .json("Status : Error during session validation.");
+
+                                        return response
+                                    }
+
+                                    let db_session = database_handler.get_session_from_id(&Uuid::from_str(session_name.unwrap().as_str()).unwrap());
+                                    println!("Found session in database: {:?}", db_session)
                                 },
                                 None => {
                                     let name_ins_status = request.insert("name", Uuid::new_v4().to_string());
@@ -69,9 +77,14 @@ pub async fn verify_credentials(request: Session, body: web::Json<MessageBody>) 
                                     if !name_ins_status.is_ok() && !val_ins_status.is_ok(){
                                         let response = HttpResponseBuilder::new(StatusCode::INTERNAL_SERVER_ERROR)
                                         .json("Status : Error during session creation.");
-                                        //save to database
+                                        
                                         return response
                                     }
+
+                                    //Save session to database
+                                    let res = database_handler.insert_session(&manager.create_session(user.get_id()));
+
+                                    println!("Inserted session: {:?}", res);
                                 },
                             }
                         },
@@ -85,7 +98,7 @@ pub async fn verify_credentials(request: Session, body: web::Json<MessageBody>) 
                     return response
                 },
                 _ => {
-                    println!("Error too many users matched");
+                    println!("Less or more than one users matched.");
                     return HttpResponse::InternalServerError()
                     .status(StatusCode::INTERNAL_SERVER_ERROR)
                     .json("Status : Database error.")

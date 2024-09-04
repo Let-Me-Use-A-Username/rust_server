@@ -13,18 +13,6 @@ impl Hasher{
         Hasher {}
     }
 
-    ///Salt generation from sha256.
-    pub fn generate_salt_sha256(&mut self, username: &String, password: &String) -> SaltString{
-        let random_bytes: [u8;16] = rand::thread_rng().r#gen();
-        let credentials = format!("{}{}{}", username, password, hex::encode(random_bytes));
-
-        let mut hasher = Sha256::new();
-        hasher.update(credentials.as_bytes());
-        let res = hasher.finalize();
-
-        return SaltString::encode_b64(res.as_slice()).unwrap();
-    }
-
     ///Salt generation from argon2.
     pub fn generate_salt_argon2(&mut self, username: &String, password: &String) -> SaltString{
         let random_bytes: [u8;ARRAY_SIZE] = rand::thread_rng().r#gen();

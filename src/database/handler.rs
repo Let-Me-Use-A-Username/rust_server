@@ -45,8 +45,6 @@ impl DatabaseHandler{
             "CREATE TABLE IF NOT EXISTS session(
                 session_id TEXT PRIMARY KEY,
                 user_id TEXT NOT NULL REFERENCES user(id),
-                created INTEGER NOT NULL,
-                expires INTEGER NOT NULL  
             );", 
             (),
         );
@@ -164,13 +162,9 @@ impl DatabaseHandler{
                         Some(session) => {
                             let session_id: String = session.get_unwrap(0);
                             let user_id: String = session.get_unwrap(1);
-                            let created: i64 = session.get_unwrap(2);
-                            let expires: i64 = session.get_unwrap(3);
                             sessions.push(Session::new(
                                 Uuid::from_str(&session_id).unwrap(), 
-                                Uuid::from_str(&user_id).unwrap(), 
-                                created, 
-                                expires, 
+                                Uuid::from_str(&user_id).unwrap(),
                             ))
                         },
                         None => {
@@ -201,32 +195,7 @@ impl DatabaseHandler{
 
         return statement.unwrap().execute((
             session.get_id().to_string(),
-            session.get_user_id().to_string(),
-            session.get_created(),
-            session.get_expires()
+            session.get_user_id().to_string()
         ))
     }
-
-    ///Updates or inserts a session.
-    pub fn update_session(&self, session: &Session) -> Result<usize, Error>{
-        let result = self.get_session_from_id(session.get_id());
-
-        if result.is_ok_and(|x| x.is_some()){
-            //update
-            let statement = self.connection.prepare(
-                "UPDATE session SET created = ?1, expires = ?2 WHERE session_id = ?3"
-            );
-            
-            println!("Updated Session");
-
-            return statement.unwrap().execute((
-                session.get_created(), 
-                session.get_expires(), 
-                session.get_id().to_string()
-            ))
-        }
-
-        return self.insert_session(session);
-    }
-
 }
