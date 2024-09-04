@@ -23,7 +23,7 @@ impl Hasher{
             },
             //If encoding fails, retry with half the size
             Err(error) => {
-                println!("{:?}", error);
+                println!("Encoding failed: {:?}\nAttempting with half size...", error);
                 let halved_random_bytes: [u8;HALF_SIZE] = rand::thread_rng().r#gen();
                 let new_credentials = format!("{}{}{}", username, password, hex::encode(halved_random_bytes));
                 return SaltString::encode_b64(new_credentials.as_bytes()).unwrap()

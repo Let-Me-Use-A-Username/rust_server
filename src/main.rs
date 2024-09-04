@@ -50,9 +50,7 @@ async fn main() -> std::io::Result<()>{
     .await
 }
 
-//https://webbureaucrat.gitlab.io/articles/setting-and-reading-session-cookies-in-rust-with-actix-web/
-//https://chatgpt.com/share/6fadc69e-c491-4431-b64d-8bf8ade37cc5
-//session handling
+//Cookie dispatcher
 pub fn cookie_handler() -> SessionMiddleware<CookieSessionStore> {
     SessionMiddleware::builder(
 	    CookieSessionStore::default(), Key::from(&[0; 64])
