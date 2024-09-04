@@ -44,7 +44,7 @@ impl DatabaseHandler{
         let session = self.connection.execute(
             "CREATE TABLE IF NOT EXISTS session(
                 session_id TEXT PRIMARY KEY,
-                user_id TEXT NOT NULL REFERENCES user(id),
+                user_id TEXT NOT NULL REFERENCES user(id)
             );", 
             (),
         );
