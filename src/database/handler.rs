@@ -191,8 +191,6 @@ impl DatabaseHandler{
             VALUES (?1, ?2)"
         );
 
-        println!("Inserted Session");
-
         return statement.unwrap().execute((
             session.get_id().to_string(),
             session.get_user_id().to_string()
