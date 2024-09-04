@@ -58,6 +58,7 @@ pub async fn verify_credentials(request: Session, body: web::Json<MessageBody>) 
                         Ok(value) => {
                             match value{
                                 Some(val) => {
+                                    println!("Session name: {:?}", request.get::<String>("name"));
                                     println!("Session value: {:?}", val)
                                     //check if value(user id) matches
                                 },
