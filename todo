@@ -1,10 +1,16 @@
 =========TODO===========
 Server side:
-        
+    Cookies and Sessions:
+        -Check if user id (Uuid) generated already exists in database (collision).
 
 
 Client side:                                                                            
-    -Sign in as guest and serve temporary cookie. 
+    -Sign in as guest and serve temporary cookie.
+        Server side:
+            -Guest users will be saved on a different database.
+                -Either in memory or physical
+            -Create passive scripts that drop guest session on some iterval (once a day?)
+
     -Popup (alert) not showing on mobile devices
 
 
@@ -19,6 +25,3 @@ Client side:
 
 
 ===========NOTES===========
-Cookies and Sessions:
-    -Check if user id (Uuid) generated already exists in database (collision).
-    -Cookies are deleted when the sessions ends.

@@ -6,20 +6,26 @@ use uuid::Uuid;
 
 use crate::models::database_models::{Session, User};
 
-static DATABASE_PATH:&'static str  = "./user_database.db3";
+static DATABASE_PATH: &'static str  = "./user_database.db3";
 
 pub struct DatabaseHandler{
-    connection: Connection
+    connection: Connection,
+    guest: Connection
 }
 impl DatabaseHandler{
     ///Get new database handler instance.
-    pub fn new() -> Result<DatabaseHandler>{
+    pub fn new() -> Result<DatabaseHandler, Error>{
         let connection = Connection::open(DATABASE_PATH);
+        let guest = Connection::open_in_memory();
 
-        if connection.is_ok(){
-            return Ok(DatabaseHandler {
-                connection: connection.unwrap()
-            });
+        if connection.is_ok() {
+            if guest.is_ok(){
+                return Ok(DatabaseHandler {
+                    connection: connection.unwrap(),
+                    guest: guest.unwrap()
+                });
+            }
+            return Err(guest.err().unwrap());
         }
         return Err(connection.err().unwrap());
     }

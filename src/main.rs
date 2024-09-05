@@ -1,5 +1,6 @@
 use actix_session::{config::{BrowserSession, CookieContentSecurity}, storage::CookieSessionStore, SessionMiddleware};
 use actix_web::{cookie::Key, guard, middleware::Logger, web, App, HttpServer};
+use auth::credentials::guest_credentials;
 use database::handler::DatabaseHandler;
 
 mod database;
@@ -42,6 +43,13 @@ async fn main() -> std::io::Result<()>{
                     web::route()
                         .guard(guard::Post())
                         .to(save_credentials)    
+                )
+            )
+            .service(
+                web::resource("/guest").route(
+                    web::route()
+                        .guard(guard::Post())
+                        .to(guest_credentials)
                 )
             )
     })

@@ -10,7 +10,7 @@ use super::{hasher::Hasher, sessions::SessionManager};
 
 ///Handler that verifies credentials.
 ///Creates a new session and sends cookie to client side.
-pub async fn verify_credentials(request: Session, body: web::Json<MessageBody>) -> impl Responder {
+pub async fn verify_credentials(session: Session, body: web::Json<MessageBody>) -> impl Responder {
     match DatabaseHandler::new(){
         Ok(database_handler) => {
             let username = &body.data.username;
@@ -51,15 +51,16 @@ pub async fn verify_credentials(request: Session, body: web::Json<MessageBody>) 
                     let user = matching_user.pop().unwrap();
                     let manager = SessionManager::new();
 
-                    match request.get::<String>("value"){
+                    match session.get::<String>("value"){
                         Ok(value) => {
                             match value{
+                                //Found existing session in request
                                 Some(session_value) => {
-                                    let session_name = request.get::<String>("name").unwrap();
+                                    let session_name = session.get::<String>("name").unwrap();
                                     println!("Session name: {:?}", session_name);
                                     println!("Session value: {:?}", session_value);
                                     
-                                    //check if session value (user id) matched user id from database
+                                    //check if session value (user id) matched users id from database
                                     if !user.get_id().eq(&Uuid::from_str(session_value.as_str()).unwrap()){
                                         let response = HttpResponseBuilder::new(StatusCode::INTERNAL_SERVER_ERROR)
                                         .json("Status : Error during session validation.");
@@ -68,11 +69,17 @@ pub async fn verify_credentials(request: Session, body: web::Json<MessageBody>) 
                                     }
 
                                     let db_session = database_handler.get_session_from_id(&Uuid::from_str(session_name.unwrap().as_str()).unwrap());
-                                    println!("Found session in database: {:?}", db_session)
+                                    println!("Found session in database: {:?}", db_session);
+                                    
+                                    //If session in database, renew session.
+                                    if db_session.is_ok_and(|x| x.is_some()){
+                                        session.renew();
+                                    }
                                 },
+                                //First session asignment
                                 None => {
-                                    let name_ins_status = request.insert("name", Uuid::new_v4().to_string());
-                                    let val_ins_status = request.insert("value", user.get_id().to_string());
+                                    let name_ins_status = session.insert("name", Uuid::new_v4().to_string());
+                                    let val_ins_status = session.insert("value", user.get_id().to_string());
     
                                     if !name_ins_status.is_ok() && !val_ins_status.is_ok(){
                                         let response = HttpResponseBuilder::new(StatusCode::INTERNAL_SERVER_ERROR)
@@ -92,6 +99,7 @@ pub async fn verify_credentials(request: Session, body: web::Json<MessageBody>) 
                             println!("Error: {:?}", error)
                         },
                     }
+
                     let response = HttpResponseBuilder::new(StatusCode::ACCEPTED)
                     .json("Status : User validated.");
 
@@ -172,6 +180,38 @@ pub async fn save_credentials(credentials: web::Json<MessageBody>) -> impl Respo
     return HttpResponse::BadRequest()
     .status(StatusCode::BAD_REQUEST)
     .json("Status : Invalid password.")
+}
+
+
+pub async fn guest_credentials(session: Session) -> impl Responder {
+    let name = session.get::<String>("name");
+    let value = session.get::<String>("value");
+
+    match DatabaseHandler::new(){
+        Ok(database_handler) => {
+            
+            //Session had an id
+            // if name.is_ok_and(|x| x.is_some()){
+            //     let id = Uuid::from_str(name.unwrap().unwrap().as_str());
+            //     let res = database_handler.get_session_from_id(&id.unwrap());
+                
+            //     //Session was found in database
+            //     if res.is_ok_and(|x| x.is_some()){
+
+            //     }
+            //     else{
+
+            //     }
+            // }
+        },
+        Err(_) => todo!(),
+    }
+
+
+    return HttpResponse::InternalServerError()
+    .status(StatusCode::INTERNAL_SERVER_ERROR)
+    .json("Status : Database error. Connection dropped.")
+
 }
 
 
