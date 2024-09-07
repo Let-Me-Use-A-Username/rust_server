@@ -9,23 +9,17 @@ use crate::models::database_models::{Session, User};
 static DATABASE_PATH: &'static str  = "./user_database.db3";
 
 pub struct DatabaseHandler{
-    connection: Connection,
-    guest: Connection
+    connection: Connection
 }
 impl DatabaseHandler{
     ///Get new database handler instance.
     pub fn new() -> Result<DatabaseHandler, Error>{
         let connection = Connection::open(DATABASE_PATH);
-        let guest = Connection::open_in_memory();
 
         if connection.is_ok() {
-            if guest.is_ok(){
-                return Ok(DatabaseHandler {
-                    connection: connection.unwrap(),
-                    guest: guest.unwrap()
-                });
-            }
-            return Err(guest.err().unwrap());
+            return Ok(DatabaseHandler {
+                connection: connection.unwrap(),
+            });
         }
         return Err(connection.err().unwrap());
     }
@@ -58,6 +52,13 @@ impl DatabaseHandler{
         if session.is_err(){
             return session
         }
+
+        let guest = self.connection.execute(
+            "CREATE TABLE IF NOT EXISTS guest(
+                id TEXT PRIMARY KEY,
+                session_id TEXT NOT NULL,
+            )", 
+        ());
 
         return Ok(user.unwrap() + session.unwrap())
     }
@@ -122,6 +123,40 @@ impl DatabaseHandler{
                 return Err(error)
             },
         }
+    }
+
+    ///Check if user/session id generated exists in database.
+    pub fn id_exists(&self, target: &String, id: &Uuid) -> Result<bool, Error>{
+        let query = format!("SELECT * FROM {} WHERE id = ?1", target);
+        let statement = self.connection.prepare(&query.as_str());
+
+        match statement.unwrap().query(rusqlite::params![id.to_string()]){
+            Ok(mut rows) => {
+
+                loop{
+                    let mut found = false;
+                    let row = rows.next().unwrap();
+                    
+                    match row{
+                        Some(retrieved) => {
+                            let target_id: String = retrieved.get_unwrap(0);
+
+                            if target_id.eq(&id.to_string()){
+                                found = true;
+                            }
+
+                        },
+                        None => {
+                            return Ok(found);
+                        },
+                    }
+                }
+            },
+            Err(error) => {
+                return Err(error)
+            },
+        }
+
     }
 
     ///Insert new user to database.

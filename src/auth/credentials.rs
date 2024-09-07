@@ -76,7 +76,7 @@ pub async fn verify_credentials(session: Session, body: web::Json<MessageBody>) 
                                         session.renew();
                                     }
                                 },
-                                //First session asignment
+                                //First session assignment for user.
                                 None => {
                                     let name_ins_status = session.insert("name", Uuid::new_v4().to_string());
                                     let val_ins_status = session.insert("value", user.get_id().to_string());
@@ -88,10 +88,29 @@ pub async fn verify_credentials(session: Session, body: web::Json<MessageBody>) 
                                         return response
                                     }
 
-                                    //Save session to database
-                                    let res = database_handler.insert_session(&manager.create_session(user.get_id()));
+                                    //check if generated id exists in database
+                                    loop{
+                                        let created_session = &manager.create_session(user.get_id());
 
-                                    println!("Inserted session: {:?}", res);
+                                        //Save session to database
+                                        if database_handler.id_exists(&String::from("session"), &created_session.get_id()).is_ok_and(|x| x == false){
+                                            
+                                            //if not exists insert
+                                            match database_handler.insert_session(created_session){
+                                                Ok(rows) => {
+                                                    println!("Inserted session: {:?}", rows);
+                                                    break;
+                                                },
+                                                Err(error) => {
+                                                    println!("Error while inserting session to database: {:?}", error);
+                                                    return HttpResponse::InternalServerError()
+                                                    .status(StatusCode::INTERNAL_SERVER_ERROR)
+                                                    .json("Status : Database error.")
+                                                },
+                                            }
+                                        }
+                                    }
+
                                 },
                             }
                         },
@@ -141,22 +160,31 @@ pub async fn save_credentials(credentials: web::Json<MessageBody>) -> impl Respo
                 //push to db
                 match hashed_password{
                     Ok(hash) => {
-                        //db push new user
-                        let user = User::new(Uuid::new_v4(), hashed_username, hash, 0, salt);
-                        match database_handler.insert_user(user){
-                            Ok(rows) => {
-                                //redirect to login
-                                println!("User {:?}", rows);
-                                return HttpResponse::Created()
-                                .status(StatusCode::CREATED)
-                                .json("Status : User created.")
-                            },
-                            Err(error) => {
-                                println!("Error while inserting user to database: {:?}", error);
-                                return HttpResponse::InternalServerError()
-                                .status(StatusCode::INTERNAL_SERVER_ERROR)
-                                .json("Status : Database error.")
-                            },
+
+                        loop{
+                            let user_id = Uuid::new_v4();
+
+                            //check if generated id exists in database
+                            if database_handler.id_exists(&String::from("user"), &user_id).is_ok_and(|x| x == false){
+                                let user = User::new(user_id, hashed_username, hash, 0, salt);
+                                
+                                //if not exists insert
+                                match database_handler.insert_user(user){
+                                    Ok(rows) => {
+                                        //redirect to login
+                                        println!("User {:?}", rows);
+                                        return HttpResponse::Created()
+                                        .status(StatusCode::CREATED)
+                                        .json("Status : User created.")
+                                    },
+                                    Err(error) => {
+                                        println!("Error while inserting user to database: {:?}", error);
+                                        return HttpResponse::InternalServerError()
+                                        .status(StatusCode::INTERNAL_SERVER_ERROR)
+                                        .json("Status : Database error.")
+                                    },
+                                }
+                            }
                         }
                     },
                     Err(error) => {
@@ -183,28 +211,47 @@ pub async fn save_credentials(credentials: web::Json<MessageBody>) -> impl Respo
 }
 
 
+///Handler that servers guest users.
 pub async fn guest_credentials(session: Session) -> impl Responder {
+    let manager = SessionManager::new();
+    //Get session name and value.
     let name = session.get::<String>("name");
     let value = session.get::<String>("value");
 
     match DatabaseHandler::new(){
         Ok(database_handler) => {
+            let valid_name = name.is_ok_and(|x| x.is_some());
+            let valid_value = value.is_ok_and(|x| x.is_some());
             
-            //Session had an id
-            // if name.is_ok_and(|x| x.is_some()){
-            //     let id = Uuid::from_str(name.unwrap().unwrap().as_str());
-            //     let res = database_handler.get_session_from_id(&id.unwrap());
-                
-            //     //Session was found in database
-            //     if res.is_ok_and(|x| x.is_some()){
+            match valid_name && valid_value{
+                //name and value valid. Not the usual case.
+                true => todo!(),
+                //Invalid, or dont exist. Most likely scenario.
+                false => {
 
-            //     }
-            //     else{
+                    loop{
+                        let mut valid = false;
+                        let guest_session = manager.guest_session();
 
-            //     }
-            // }
+                        valid &= database_handler.id_exists(&"user".to_string(), guest_session.get_user_id()).is_ok_and(|x| x);
+                        valid &= database_handler.id_exists(&"session".to_string(), guest_session.get_id()).is_ok_and(|x| x);
+                        
+                        if !valid{
+                            let result = session.insert("guest", guest_session.get_id().to_string());
+                            //let db_result = database_handler.insert_guest(guest_session.get_id(), guest_session.get_user_id());
+                        }
+                    }
+                    
+                },
+            }
         },
-        Err(_) => todo!(),
+        Err(error) => {
+            //HTTP ERROR response
+            println!("Error while opening database: {:?}", error);
+            return HttpResponse::InternalServerError()
+            .status(StatusCode::INTERNAL_SERVER_ERROR)
+            .json("Status : Database error. Connection dropped.")
+        }
     }
 
 

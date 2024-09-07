@@ -17,4 +17,12 @@ impl SessionManager{
 
         return Session::new(session_id, *user_id)
     }
+    
+
+    pub fn guest_session(&self) -> Session{
+        let user_id = Uuid::new_v4();
+        let session_id = Uuid::new_v4();
+
+        return Session::new(session_id, user_id)
+    }
 }

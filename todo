@@ -1,7 +1,12 @@
 =========TODO===========
+-Add maintanence scripts
+    -Cleaning up guests from database.
+
+Server and Client:
+    -Add email to user registration
+        -Also to user database
+
 Server side:
-    Cookies and Sessions:
-        -Check if user id (Uuid) generated already exists in database (collision).
 
 
 Client side:                                                                            
@@ -25,3 +30,8 @@ Client side:
 
 
 ===========NOTES===========
+Server side:
+    Session and User in database:
+        -Before inserting to database, it is checked to see whether the ids already exists (Uuid collision)
+    Guest Users:
+        -Due to the low memory on the VPS, an additional and separate table will be used, cause no memory.
