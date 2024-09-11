@@ -238,7 +238,17 @@ pub async fn guest_credentials(session: Session) -> impl Responder {
                         
                         if !valid{
                             let result = session.insert("guest", guest_session.get_id().to_string());
-                            //let db_result = database_handler.insert_guest(guest_session.get_id(), guest_session.get_user_id());
+                            
+                            if result.is_ok(){
+                                let db_result = database_handler.insert_guest(guest_session.get_id(), guest_session.get_user_id());
+                                
+                                if db_result.is_ok(){
+                                    return HttpResponse::Accepted()
+                                        .status(StatusCode::OK)
+                                        .json("Status: Guest user accepted.")
+                                }
+                            }
+                                                       
                         }
                     }
                     
@@ -253,12 +263,6 @@ pub async fn guest_credentials(session: Session) -> impl Responder {
             .json("Status : Database error. Connection dropped.")
         }
     }
-
-
-    return HttpResponse::InternalServerError()
-    .status(StatusCode::INTERNAL_SERVER_ERROR)
-    .json("Status : Database error. Connection dropped.")
-
 }
 
 

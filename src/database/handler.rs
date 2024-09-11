@@ -226,4 +226,18 @@ impl DatabaseHandler{
             session.get_user_id().to_string()
         ))
     }
+
+    ///Insert new guest user to database.
+    pub fn insert_guest(&self, session_id: &Uuid, guest_id: &Uuid) -> Result<usize, Error>{
+         let statement = self.connection.prepare(
+            "INSERT INTO guest(id, session_id)
+            VALUES (?1, ?2)"
+        );
+        
+        return statement.unwrap().execute((
+            session_id.to_string(),
+            guest_id.to_string()
+        ))
+
+    }
 }

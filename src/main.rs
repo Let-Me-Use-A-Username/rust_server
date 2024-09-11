@@ -1,18 +1,26 @@
 use actix_session::{config::{BrowserSession, CookieContentSecurity}, storage::CookieSessionStore, SessionMiddleware};
 use actix_web::{cookie::Key, guard, middleware::Logger, web, App, HttpServer};
+use cronjob::CronJob;
+
 use auth::credentials::guest_credentials;
 use database::handler::DatabaseHandler;
+
+use crate::auth::credentials::{verify_credentials, save_credentials};
+use crate::maintenance::database_operations::delete_guests;
 
 mod database;
 mod models;
 mod auth;
-
-use crate::auth::credentials::{verify_credentials, save_credentials};
+mod maintenance;
 
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()>{
-    println!("Starting server...");
+    //FIXME: Fix intervals
+    let mut cron = CronJob::new("GuestRemover", delete_guests);
+    cron.minutes("2");
+    cron.start_job();
+
     let handler = DatabaseHandler::new();
 
     if handler.is_ok(){
@@ -27,6 +35,8 @@ async fn main() -> std::io::Result<()>{
         
     }
 
+    println!("Starting server...");
+    
     HttpServer::new(||{
         App::new()
             .wrap(Logger::default())
