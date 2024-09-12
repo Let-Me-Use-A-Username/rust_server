@@ -22,4 +22,5 @@ hex = "0.4.3"
 sha2 = "0.10.8"
 uuid = { version = "1.10.0", features = ["v4"] }
 
-cronjob = "0.4.17"                                          #scheduler
+tokio = { version = "1", features = ["full"] }
+tokio-cron-scheduler = "0.5"

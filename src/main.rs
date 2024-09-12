@@ -1,12 +1,12 @@
 use actix_session::{config::{BrowserSession, CookieContentSecurity}, storage::CookieSessionStore, SessionMiddleware};
 use actix_web::{cookie::Key, guard, middleware::Logger, web, App, HttpServer};
-use cronjob::CronJob;
 
 use auth::credentials::guest_credentials;
 use database::handler::DatabaseHandler;
+use maintenance::maintainer::Maintainer;
 
 use crate::auth::credentials::{verify_credentials, save_credentials};
-use crate::maintenance::database_operations::delete_guests;
+use crate::maintenance::maintainer::my_task;
 
 mod database;
 mod models;
@@ -16,10 +16,15 @@ mod maintenance;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()>{
-    //FIXME: Fix intervals
-    let mut cron = CronJob::new("GuestRemover", delete_guests);
-    cron.minutes("2");
-    cron.start_job();
+    let maintainer = Maintainer::new().await;
+    let res = maintainer.schedule_task(|| my_task("Midnight task")).await;
+    
+    if res.is_ok(){
+        println!("Initialized maintainer...");
+        let scheduler_handle = tokio::spawn(async move {
+            maintainer.start().await;
+        });
+    }
 
     let handler = DatabaseHandler::new();
 

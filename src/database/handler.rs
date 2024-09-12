@@ -56,11 +56,15 @@ impl DatabaseHandler{
         let guest = self.connection.execute(
             "CREATE TABLE IF NOT EXISTS guest(
                 id TEXT PRIMARY KEY,
-                session_id TEXT NOT NULL,
-            )", 
+                session_id TEXT NOT NULL
+            );", 
         ());
 
-        return Ok(user.unwrap() + session.unwrap())
+        if guest.is_err(){
+            return guest;
+        }
+
+        return Ok(user.unwrap() + session.unwrap() + guest.unwrap())
     }
 
     ///Query database for debugging.
@@ -133,8 +137,9 @@ impl DatabaseHandler{
         match statement.unwrap().query(rusqlite::params![id.to_string()]){
             Ok(mut rows) => {
 
+                let mut found = false;
+
                 loop{
-                    let mut found = false;
                     let row = rows.next().unwrap();
                     
                     match row{
