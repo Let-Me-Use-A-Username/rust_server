@@ -1,18 +1,31 @@
 use actix_session::{config::{BrowserSession, CookieContentSecurity}, storage::CookieSessionStore, SessionMiddleware};
 use actix_web::{cookie::Key, guard, middleware::Logger, web, App, HttpServer};
+
 use auth::credentials::guest_credentials;
 use database::handler::DatabaseHandler;
+use maintenance::maintainer::Maintainer;
+
+use crate::auth::credentials::{verify_credentials, save_credentials};
+use crate::maintenance::maintainer::my_task;
 
 mod database;
 mod models;
 mod auth;
-
-use crate::auth::credentials::{verify_credentials, save_credentials};
+mod maintenance;
 
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()>{
-    println!("Starting server...");
+    let maintainer = Maintainer::new().await;
+    let res = maintainer.schedule_task(|| my_task("Midnight task")).await;
+    
+    if res.is_ok(){
+        println!("Initialized maintainer...");
+        let scheduler_handle = tokio::spawn(async move {
+            maintainer.start().await;
+        });
+    }
+
     let handler = DatabaseHandler::new();
 
     if handler.is_ok(){
@@ -27,6 +40,8 @@ async fn main() -> std::io::Result<()>{
         
     }
 
+    println!("Starting server...");
+    
     HttpServer::new(||{
         App::new()
             .wrap(Logger::default())

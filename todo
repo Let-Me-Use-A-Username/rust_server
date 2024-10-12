@@ -1,6 +1,7 @@
 =========TODO===========
 -Add maintanence scripts
     -Cleaning up guests from database.
+        -crates: cronjob , actix cron / actix jobs
 
 Server and Client:
     -Add email to user registration

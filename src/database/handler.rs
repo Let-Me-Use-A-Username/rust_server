@@ -56,8 +56,8 @@ impl DatabaseHandler{
         let guest = self.connection.execute(
             "CREATE TABLE IF NOT EXISTS guest(
                 id TEXT PRIMARY KEY,
-                session_id TEXT NOT NULL,
-            )", 
+                session_id TEXT NOT NULL
+            );", 
         ());
         
         if guest.is_err(){
@@ -137,8 +137,9 @@ impl DatabaseHandler{
         match statement.unwrap().query(rusqlite::params![id.to_string()]){
             Ok(mut rows) => {
 
+                let mut found = false;
+
                 loop{
-                    let mut found = false;
                     let row = rows.next().unwrap();
                     
                     match row{
@@ -229,5 +230,19 @@ impl DatabaseHandler{
             session.get_id().to_string(),
             session.get_user_id().to_string()
         ))
+    }
+
+    ///Insert new guest user to database.
+    pub fn insert_guest(&self, session_id: &Uuid, guest_id: &Uuid) -> Result<usize, Error>{
+         let statement = self.connection.prepare(
+            "INSERT INTO guest(id, session_id)
+            VALUES (?1, ?2)"
+        );
+        
+        return statement.unwrap().execute((
+            session_id.to_string(),
+            guest_id.to_string()
+        ))
+
     }
 }

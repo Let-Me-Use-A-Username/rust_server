@@ -238,9 +238,18 @@ pub async fn guest_credentials(session: Session) -> impl Responder {
                         
                         //Guest id and session id don't exist in database.
                         if !valid{
-                            let name_res = session.insert("name", guest_session.get_id().to_string());
-                            let value_res = session.insert("value", guest_session.get_user_id().to_string());
-                            //let db_result = database_handler.insert_guest(guest_session.get_id(), guest_session.get_user_id());
+                            let result = session.insert("guest", guest_session.get_id().to_string());
+                            
+                            if result.is_ok(){
+                                let db_result = database_handler.insert_guest(guest_session.get_id(), guest_session.get_user_id());
+                                
+                                if db_result.is_ok(){
+                                    return HttpResponse::Accepted()
+                                        .status(StatusCode::OK)
+                                        .json("Status: Guest user accepted.")
+                                }
+                            }
+                                                       
                         }
                     }
                     
