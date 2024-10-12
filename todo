@@ -1,22 +1,16 @@
 =========TODO===========
--Add maintanence scripts
-    -Cleaning up guests from database.
-        -crates: cronjob , actix cron / actix jobs
-
 Server and Client:
     -Add email to user registration
         -Also to user database
 
+
 Server side:
+    -Add maintanence scripts
+          -Create passive scripts that drop guest session on some iterval (once a day?)
 
 
 Client side:                                                                            
     -Sign in as guest and serve temporary cookie.
-        Server side:
-            -Guest users will be saved on a different database.
-                -Either in memory or physical
-            -Create passive scripts that drop guest session on some iterval (once a day?)
-
     -Popup (alert) not showing on mobile devices
 
 
@@ -35,4 +29,4 @@ Server side:
     Session and User in database:
         -Before inserting to database, it is checked to see whether the ids already exists (Uuid collision)
     Guest Users:
-        -Due to the low memory on the VPS, an additional and separate table will be used, cause no memory.
+        -Due to the low memory on the VPS, an additional and separate table will be used, instead of a separate database, cause no memory.

@@ -1,16 +1,18 @@
 use tokio_cron_scheduler::{Job, JobScheduler, JobSchedulerError};
-use std::sync::Arc;
-use tokio::sync::Mutex;
+use std::sync::{Arc, Mutex};
+use tokio::sync::Mutex as TokioMutex;
+
+use crate::database::handler::DatabaseHandler;
 
 pub struct Maintainer {
-    scheduler: Arc<Mutex<JobScheduler>>,
+    scheduler: Arc<TokioMutex<JobScheduler>>,
 }
 
 impl Maintainer {
     pub async fn new() -> Self {
         let scheduler = JobScheduler::new();
         Maintainer {
-            scheduler: Arc::new(Mutex::new(scheduler)),
+            scheduler: Arc::new(TokioMutex::new(scheduler)),
         }
     }
 
@@ -19,7 +21,8 @@ impl Maintainer {
     where
         F: Fn() -> String + Send + Sync + Clone + 'static,
     {
-        let job = Job::new_async("37 0 0 * * *", move |_uuid, _l| {
+        //FIXME : Correct the interval
+        let job = Job::new_async("* * * * * *", move |_uuid, _l| {
             let task = task.clone();
             Box::pin(async move {
                 let result = task();
@@ -41,8 +44,10 @@ impl Maintainer {
     }
 }
 
-// Example task function
-pub fn my_task(arg: &str) -> String {
-    format!("Task executed with argument: {}", arg)
+///Guest session cleanup function.
+pub fn guest_cleanup(handler_op: Arc<Mutex<DatabaseHandler>>) -> String {
+    let handler = handler_op.lock().unwrap();
+    
+    return "".to_string()
 }
 

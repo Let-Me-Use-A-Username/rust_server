@@ -1,3 +1,5 @@
+use std::sync::{Arc, Mutex};
+
 use actix_session::{config::{BrowserSession, CookieContentSecurity}, storage::CookieSessionStore, SessionMiddleware};
 use actix_web::{cookie::Key, guard, middleware::Logger, web, App, HttpServer};
 
@@ -6,7 +8,7 @@ use database::handler::DatabaseHandler;
 use maintenance::maintainer::Maintainer;
 
 use crate::auth::credentials::{verify_credentials, save_credentials};
-use crate::maintenance::maintainer::my_task;
+use crate::maintenance::maintainer::guest_cleanup;
 
 mod database;
 mod models;
@@ -16,26 +18,33 @@ mod maintenance;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()>{
-    let maintainer = Maintainer::new().await;
-    let res = maintainer.schedule_task(|| my_task("Midnight task")).await;
     
-    if res.is_ok(){
-        println!("Initialized maintainer...");
-        let scheduler_handle = tokio::spawn(async move {
-            maintainer.start().await;
-        });
-    }
+    //Initialize database handler
+    let handler_op = DatabaseHandler::new();
 
-    let handler = DatabaseHandler::new();
+    if handler_op.is_ok(){
+        let handler = Arc::new(Mutex::new(handler_op.unwrap()));
 
-    if handler.is_ok(){
-        match handler.unwrap().initialize_tables(){
+        match handler.lock().unwrap().initialize_tables(){
             Ok(_) => {
-                println!("Initialized database...")
+                println!("Initialized database tables...")
             },
             Err(error) => {
-                println!("{:?}", error);
+                panic!("Error running database. {:?}", error);
             },
+        }
+
+        let maintainer = Maintainer::new().await;
+        
+        let res = maintainer.schedule_task({
+            move || guest_cleanup(handler.clone()) // Pass the Arc<Mutex<DatabaseHandler>> to the task
+        }).await;
+        
+        if res.is_ok(){
+            println!("Initialized maintainer...");
+            tokio::spawn(async move {
+                maintainer.start().await;
+            });
         }
         
     }

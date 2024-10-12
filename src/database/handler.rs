@@ -8,6 +8,7 @@ use crate::models::database_models::{Session, User};
 
 static DATABASE_PATH: &'static str  = "./user_database.db3";
 
+
 pub struct DatabaseHandler{
     connection: Connection
 }

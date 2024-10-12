@@ -225,7 +225,7 @@ pub async fn guest_credentials(session: Session) -> impl Responder {
             
             match valid_name && valid_value{
                 //name and value valid. Not the usual case. 
-                //Could be from previous session, assign user session?
+                //: If matching guest ids, renew session
                 true => todo!(),
                 //Invalid, or dont exist. Most likely scenario.
                 false => {
@@ -238,9 +238,10 @@ pub async fn guest_credentials(session: Session) -> impl Responder {
                         
                         //Guest id and session id don't exist in database.
                         if !valid{
-                            let result = session.insert("guest", guest_session.get_id().to_string());
+                            let name_op = session.insert("name", guest_session.get_id().to_string());
+                            let value_op = session.insert("value", guest_session.get_user_id().to_string());
                             
-                            if result.is_ok(){
+                            if name_op.is_ok() && value_op.is_ok(){
                                 let db_result = database_handler.insert_guest(guest_session.get_id(), guest_session.get_user_id());
                                 
                                 if db_result.is_ok(){
