@@ -224,20 +224,22 @@ pub async fn guest_credentials(session: Session) -> impl Responder {
             let valid_value = value.is_ok_and(|x| x.is_some());
             
             match valid_name && valid_value{
-                //name and value valid. Not the usual case.
+                //name and value valid. Not the usual case. 
+                //Could be from previous session, assign user session?
                 true => todo!(),
                 //Invalid, or dont exist. Most likely scenario.
                 false => {
-
                     loop{
                         let mut valid = false;
                         let guest_session = manager.guest_session();
 
-                        valid &= database_handler.id_exists(&"user".to_string(), guest_session.get_user_id()).is_ok_and(|x| x);
-                        valid &= database_handler.id_exists(&"session".to_string(), guest_session.get_id()).is_ok_and(|x| x);
+                        valid |= database_handler.id_exists(&"user".to_string(), guest_session.get_user_id()).is_ok_and(|x| x);
+                        valid |= database_handler.id_exists(&"session".to_string(), guest_session.get_id()).is_ok_and(|x| x);
                         
+                        //Guest id and session id don't exist in database.
                         if !valid{
-                            let result = session.insert("guest", guest_session.get_id().to_string());
+                            let name_res = session.insert("name", guest_session.get_id().to_string());
+                            let value_res = session.insert("value", guest_session.get_user_id().to_string());
                             //let db_result = database_handler.insert_guest(guest_session.get_id(), guest_session.get_user_id());
                         }
                     }
@@ -253,12 +255,6 @@ pub async fn guest_credentials(session: Session) -> impl Responder {
             .json("Status : Database error. Connection dropped.")
         }
     }
-
-
-    return HttpResponse::InternalServerError()
-    .status(StatusCode::INTERNAL_SERVER_ERROR)
-    .json("Status : Database error. Connection dropped.")
-
 }
 
 

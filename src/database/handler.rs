@@ -59,8 +59,12 @@ impl DatabaseHandler{
                 session_id TEXT NOT NULL,
             )", 
         ());
+        
+        if guest.is_err(){
+            return guest
+        }
 
-        return Ok(user.unwrap() + session.unwrap())
+        return Ok(user.unwrap() + session.unwrap() + guest.unwrap())
     }
 
     ///Query database for debugging.
